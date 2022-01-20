@@ -2,7 +2,7 @@
 
 int RegisterAllocator::inRegs(string name)
 {
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
         if (name == this->registers[i])
             return i;
     return 8;
@@ -10,12 +10,12 @@ int RegisterAllocator::inRegs(string name)
 
 int RegisterAllocator::getFree()
 {
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         if (registers[i] == "")
             return i;
 
-        // TODO WILL WORK WHEN ALLOCATION IN BASIC BLOCKS OTHERWISE LOOPS WILL CAUSE VALUE DROP
+        // TODO WILL WORK WHEN ALLOCATION IN BASIC BLOCKS OTHERWISE LOOPS WILL CAUSE DATA LOSS
         if (usage[registers[i]].maxUse < this->line)
         {
             return i;
@@ -30,6 +30,13 @@ void RegisterAllocator::markUse(string name, int line){
         this->usage[name].maxUse = line;
     }
 }
+
+void RegisterAllocator::clearUse(){
+    for(auto use: this->usage){
+        use.second.uselist.clear();
+    }
+}
+
 void RegisterAllocator::prepareUseLists(){
     for(auto use: this->usage){
         sort(use.second.uselist.begin(), use.second.uselist.end());
@@ -56,9 +63,8 @@ string RegisterAllocator::allocate(string name)
     }
 
     int nextUse[8] =  {-1,-1,-1,-1,-1,-1,-1,-1};
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
-        // todo use deque popfront to avoid checking already skipped values
         for (int use : this->usage[registers[i]].uselist)
         {
             if (use > this->line)
@@ -73,7 +79,7 @@ string RegisterAllocator::allocate(string name)
     }
 
     int max = 0;
-    for (int i = 1; i < 6; i++)
+    for (int i = 1; i < 7; i++)
         if (nextUse[max] < nextUse[i])
             max = i;
 

@@ -4,7 +4,12 @@ if test -f "compiler/last_compile.sha"; then
     cursha=$(./sha1dirsum.sh compiler/src)
     if [ "$sha" == "$cursha" ]
     then
-        ./compiler/compiler < example.imp
+        if [ -z "$1" ]
+        then
+            ./compiler/compiler < example.imp
+        else
+            ./compiler/compiler < $1
+        fi
         exit 0
     fi
 else
@@ -17,4 +22,9 @@ newsha=$(./sha1dirsum.sh compiler/src)
 rm compiler/last_compile.sha
 echo "$newsha" > "compiler/last_compile.sha"
 
-./compiler/compiler < example.imp
+if [ -z "$1" ]
+then
+    ./compiler/compiler < example.imp
+else
+    ./compiler/compiler < $1
+fi

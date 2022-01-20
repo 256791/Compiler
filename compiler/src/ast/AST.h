@@ -225,7 +225,7 @@ public:
     CompoundStmnt *stmnts;
 
     void printXML(int indent);
-    Program *toRTL();
+    RTLProgram *toRTL();
 };
 
 #endif

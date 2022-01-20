@@ -26,6 +26,7 @@ private:
 public:
 
     void markUse(string name, int line);
+    void clearUse();
     void prepareUseLists();
     void next();
     string allocate(string name);

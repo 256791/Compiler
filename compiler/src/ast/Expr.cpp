@@ -22,10 +22,7 @@ vector<RTLNode *> Comp::toRTL()
 {
     vector<RTLNode*> nodes;
 
-    int adr = RTLObject::allocateVariable();
-    VReg* to = new VReg("VREG_"+to_string(adr));
-    to->adr = adr;
-
+    VReg* to = new VReg(VReg::getNewName());
     RTLObject* op_a = dynamic_cast<RTLObject* >(this->a->toRTL()[0]);
     RTLObject* op_b = dynamic_cast<RTLObject* >(this->b->toRTL()[0]);
     Operation* ptr;
@@ -89,8 +86,6 @@ vector<RTLNode *> BinOpExpr::toRTL()
         nodes.push_back(ptr);
     }else{
         VReg* to = new VReg(VReg::getNewName());
-        to->adr = RTLObject::allocateVariable();
-
         Operation* ptr = new Operation(to, op_a, this->op, op_b);
         nodes.push_back(ptr);
     }

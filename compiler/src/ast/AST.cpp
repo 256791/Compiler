@@ -13,9 +13,8 @@ AST::AST(CompoundStmnt *decls, CompoundStmnt *stmnts)
     this->stmnts = stmnts;
 }
 
-Program *AST::toRTL()
+RTLProgram *AST::toRTL()
 {
-
     vector<RTLObject *> data;
     vector<RTLNode *> commands;
 
@@ -34,5 +33,5 @@ Program *AST::toRTL()
     }
     
 
-    return new Program(data, commands);
+    return new RTLProgram(data, commands);
 };

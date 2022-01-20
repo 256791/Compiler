@@ -1,10 +1,10 @@
 #include "RTL.h"
-#include "RegisterAllocator.h"
 
 int RTLObject::ADR = 0;
 
 int Constans::ID = 0;
 int VReg::ID = 0;
+int Flag::ID = 0;
 
 int RTLObject::allocateVariable()
 {
@@ -27,32 +27,16 @@ string VReg::getNewName()
     return "VREG_" + to_string(ID++);
 }
 
-vector<Command> Variable::toAll() {}
-
-vector<Command> Constans::toAll() {}
-
-vector<Command> VReg::toAll() {}
-
-vector<Command> Reg::toAll() {}
-
-vector<Command> Operation::toAll() {}
-
-vector<Command> Call::toAll() {}
-
-vector<Command> Jump::toAll() {}
-
-vector<Command> Array::toAll() {}
-
-vector<Command> Assignment::toAll() {}
-
-vector<Command> MemoryOP::toAll() {}
-
-vector<Command> Flag::toAll() {}
+string Flag::getNewName()
+{
+    return "FLAG_" + to_string(ID++);
+}
 
 Array::Array(string name)
 {
     this->name = name;
     this->adr = -1;
+    this->size = -1;
 }
 
 Variable::Variable(string name)
@@ -93,16 +77,10 @@ Assignment::Assignment(RTLObject *dest, RTLObject *source)
     this->source = source;
 }
 
-Jump::Jump()
-{
-    this->type = 'F';
-    this->on = nullptr;
-}
-
 Jump::Jump(RTLNode *destination)
 {
     this->type = 'J';
-    this->destination = destination;
+    this->destination = dynamic_cast<Flag *>(destination);
     this->on = nullptr;
 }
 
@@ -110,7 +88,7 @@ Jump::Jump(char type, RTLNode *destination, RTLObject *on)
 {
     this->type = type;
     this->on = on;
-    this->destination = destination;
+    this->destination = dynamic_cast<Flag *>(destination);
 }
 
 MemoryOP::MemoryOP(string command, RTLObject *adr, RTLObject *val)
@@ -126,11 +104,12 @@ Call::Call(string command, RTLObject *operand)
     this->operand = operand;
 }
 
-Program::Program(vector<RTLObject *> objects, vector<RTLNode *> commands)
+Flag::Flag()
 {
-    this->objects = objects;
-    this->commands = commands;
+    this->name = Flag::getNewName();
 }
+
+void RTLNode::resolveAddresses(vector<RTLObject *> &objects) {}
 
 void RTLObject::resolveAddresses(vector<RTLObject *> &objects)
 {
@@ -139,7 +118,13 @@ void RTLObject::resolveAddresses(vector<RTLObject *> &objects)
         if (this->name == obj->name)
         {
             this->adr = obj->adr;
+            return;
         }
+    }
+    if (dynamic_cast<Variable *>(this))
+    {
+        this->adr = RTLObject::allocateVariable();
+        objects.push_back(this);
     }
 }
 
@@ -151,6 +136,7 @@ void Array::resolveAddresses(vector<RTLObject *> &objects)
         {
             Array *arr = dynamic_cast<Array *>(obj);
             this->adr = arr->adr;
+            this->size = arr->size;
             this->offset = arr->offset;
         }
     }
@@ -183,285 +169,366 @@ void Jump::resolveAddresses(vector<RTLObject *> &objects)
     }
 }
 
-void MemoryOP::resolveAddresses(vector<RTLObject *> &objects) {}
-
-void Flag::resolveAddresses(vector<RTLObject *> &objects) {}
-
-void Program::printRTL()
+void MemoryOP::resolveAddresses(vector<RTLObject *> &objects)
 {
-    cout << "RTL OBJECTS" << endl
-         << endl;
-    for (auto node : this->objects)
-    {
-        node->printNode();
-    }
-    cout << endl
-         << endl
-         << "RTL COMMANDS" << endl
-         << endl;
-    for (auto node : this->commands)
-    {
-        node->printNode();
-    }
+    // not in use but might be implemented
 }
 
-RTLObject *RTLObject::expand(RTLObject *obj, vector<RTLNode *> &expanded)
+vector<RTLObject *> RTLNode::getUseVector()
 {
-    if (Array *arr = dynamic_cast<Array *>(obj))
+    return vector<RTLObject *>();
+};
+
+vector<RTLObject *> Variable::getUseVector()
+{
+    vector<RTLObject *> objects;
+    // dest and source use
+    objects.push_back(this);
+    return objects;
+};
+
+vector<RTLObject *> Array::getUseVector()
+{
+    vector<RTLObject *> objects;
+    // dest and source use
+    objects.push_back(this);
+    return objects;
+};
+
+vector<RTLObject *> Constans::getUseVector()
+{
+    vector<RTLObject *> objects;
+    objects.push_back(this->to);
+    return objects;
+};
+
+vector<RTLObject *> Operation::getUseVector()
+{
+    vector<RTLObject *> objects;
+    if (dynamic_cast<VReg *>(this->dest))
+        objects.push_back(this->dest);
+    if (dynamic_cast<VReg *>(this->operand_a))
+        objects.push_back(this->operand_a);
+    if (dynamic_cast<VReg *>(this->operand_b))
+        objects.push_back(this->operand_b);
+    return objects;
+};
+
+vector<RTLObject *> Assignment::getUseVector()
+{
+    vector<RTLObject *> objects;
+    if (dynamic_cast<VReg *>(this->dest))
+        objects.push_back(this->dest);
+    if (dynamic_cast<VReg *>(this->source))
+        objects.push_back(this->source);
+    return objects;
+};
+
+vector<RTLObject *> Call::getUseVector()
+{
+    vector<RTLObject *> objects;
+    objects.push_back(this->operand);
+    return objects;
+};
+
+vector<RTLObject *> Jump::getUseVector()
+{
+    vector<RTLObject *> objects;
+    if (this->on != nullptr)
+        objects.push_back(this->on);
+    return objects;
+};
+
+
+
+bool RTLNode::isRHS(string name){
+    return false;
+}
+
+bool Variable::isRHS(string name){
+    //todo?
+    return false;
+}
+
+bool Array::isRHS(string name){
+    return this->at->name == name;
+}
+
+bool Operation::isRHS(string name){
+    return this->operand_a->name == name || this->operand_b->name == name;
+}
+
+bool Assignment::isRHS(string name){
+    return this->source->name == name;
+}
+
+bool Call::isRHS(string name){
+    return this->command == "PUT";
+}
+
+bool Jump::isRHS(string name){
+    return true;
+}
+
+
+
+
+void RTLNode::assignReg(string name, Reg *reg)
+{
+    cerr << "This RTLObject does not use registers!\n";
+    throw this;
+};
+
+void Variable::assignReg(string name, Reg *reg){
+    // todo
+};
+
+void Array::assignReg(string name, Reg *reg){
+    // todo
+};
+
+void Constans::assignReg(string name, Reg *reg)
+{
+    if (this->to->name == name)
     {
-        if (Constans *con = dynamic_cast<Constans *>(arr->at))
-        {
-            Variable *replace = new Variable(arr->name + "_" + to_string(con->value));
-            replace->adr = arr->adr + (con->value - arr->offset);
-            return replace;
-        }
-        else
+        this->to = reg;
+    }
+    else if (!this->use_inc && this->use->name == name)
+    {
+        this->use = reg;
+    }
+};
+
+void Operation::assignReg(string name, Reg *reg)
+{
+    if (this->dest->name == name)
+    {
+        this->dest = reg;
+    }
+    else if (this->operand_a->name == name)
+    {
+        this->operand_a = reg;
+    }
+    else if (this->operand_b->name == name)
+    {
+        this->operand_b = reg;
+    }
+};
+void Assignment::assignReg(string name, Reg *reg)
+{
+    if (this->dest->name == name)
+    {
+        this->dest = reg;
+    }
+    else if (this->source->name == name)
+    {
+        this->source = reg;
+    }
+};
+
+void Call::assignReg(string name, Reg *reg)
+{
+    this->operand = reg;
+};
+
+void Jump::assignReg(string name, Reg *reg)
+{
+    this->on = reg;
+};
+
+vector<RTLNode *> RTLNode::expand(bool deep)
+{
+    vector<RTLNode *> nodes;
+    nodes.push_back(this);
+    return nodes;
+}
+
+vector<RTLNode *> Jump::expand(bool deep)
+{
+    vector<RTLNode *> nodes;
+    nodes.push_back(this);
+    return nodes;
+}
+
+vector<RTLNode *> RTLObject::expandVariable(VReg *to)
+{
+    cerr << "This RTLObject cant be expanded!\n";
+    throw;
+}
+
+vector<RTLNode *> Constans::expandVariable(VReg *to)
+{
+    vector<RTLNode *> nodes;
+    this->to = to;
+    if (this->value > 65536 && to->adr == -1)
+        this->to->adr = allocateVariable();
+
+    // this->use = new VReg(VReg::getNewName());
+    this->use = new Reg('h');
+
+    nodes.push_back(this);
+
+    return nodes;
+}
+
+vector<RTLNode *> Variable::expandVariable(VReg *to)
+{
+    vector<RTLNode *> nodes;
+    nodes.push_back(this);
+    return nodes;
+}
+
+vector<RTLNode *> Array::expandVariable(VReg *to)
+{
+    vector<RTLNode *> nodes;
+    this->to = to;
+    nodes.push_back(this);
+    return nodes;
+
+    // if(Variable* var = dynamic_cast<Variable *>(this->at)){
+
+    // }else if(Constans* con = dynamic_cast<Constans *>(this->at)){
+    //     int adr = this->adr + this->offset + con->value;
+
+    //     this->at;
+    // }else if(VReg* vreg = dynamic_cast<VReg *>(this->at)){
+
+    // }
+
+    // Constans *con = new Constans(Constans::getNewName());
+    // con->value = this->adr + this->offset;
+    // vector<RTLNode *> nodes = con->expand(deep);
+    // Assignment *assignment = new Assignment(new VReg(VReg::getNewName()), con);
+    // nodes.push_back(assignment);
+    // return nodes;
+}
+
+vector<RTLNode *> Assignment::expand(bool deep)
+{
+    vector<RTLNode *> nodes;
+    if (!(dynamic_cast<VReg *>(this->source) || dynamic_cast<Reg *>(this->source)))
+    {
+        if (!(dynamic_cast<VReg *>(this->dest) || dynamic_cast<Reg *>(this->dest)))
         {
             VReg *vreg = new VReg(VReg::getNewName());
-            arr->to = vreg;
-            expanded.push_back(arr);
-            return vreg;
+
+            Assignment *assignment = new Assignment(vreg, this->source);
+            nodes = assignment->expand(deep);
+
+            this->source = vreg;
+            nodes.push_back(this);
+
+            return nodes;
         }
     }
-    else if (Constans *con = dynamic_cast<Constans *>(obj))
+    if (deep)
+    {
+        if (!(dynamic_cast<VReg *>(this->source) || dynamic_cast<Reg *>(this->source)))
+        {
+            // should extend?
+            // todo remove constans only
+            if (dynamic_cast<Constans *>(this->source))
+            {
+                nodes = this->source->expandVariable(dynamic_cast<VReg *>(this->dest));
+                return nodes;
+            }
+        }
+        if (!(dynamic_cast<VReg *>(this->dest) || dynamic_cast<Reg *>(this->dest)))
+        {
+            // should extnd?
+            // todo create var store
+        }
+    }
+
+    nodes.push_back(this);
+    return nodes;
+}
+
+vector<RTLNode *> Operation::expand(bool deep)
+{
+    vector<RTLNode *> nodes;
+    if (!(dynamic_cast<VReg *>(this->operand_a) || dynamic_cast<Reg *>(this->operand_a)))
     {
         VReg *vreg = new VReg(VReg::getNewName());
-        con->to = vreg;
-        vreg->adr;
-        expanded.push_back(con);
-        return vreg;
+
+        Assignment *assignment = new Assignment(vreg, this->operand_a);
+        nodes = assignment->expand(deep);
+
+        this->operand_a = vreg;
+    }
+
+    if (!(dynamic_cast<VReg *>(this->operand_b) || dynamic_cast<Reg *>(this->operand_b)))
+    {
+        VReg *vreg = new VReg(VReg::getNewName());
+
+        Assignment *assignment = new Assignment(vreg, this->operand_b);
+        vector<RTLNode *> to_append = assignment->expand(deep);
+        nodes.insert(nodes.end(), to_append.begin(), to_append.end());
+
+        this->operand_b = vreg;
+    }
+
+    if (!(dynamic_cast<VReg *>(this->dest) || dynamic_cast<Reg *>(this->dest)))
+    {
+        VReg *vreg = new VReg(VReg::getNewName());
+        vreg->adr = RTLObject::allocateVariable();
+
+        Assignment *assignment = new Assignment(vreg, this->dest);
+        vector<RTLNode *> to_append = assignment->expand(deep);
+
+        this->dest = vreg;
+
+        nodes.push_back(this);
+        nodes.insert(nodes.end(), to_append.begin(), to_append.end());
     }
     else
     {
-        return obj;
+        nodes.push_back(this);
     }
+
+    return nodes;
 }
 
-void Program::resolveAddresses()
+vector<RTLNode *> Call::expand(bool deep)
 {
-    for (RTLNode *node : this->commands)
-        node->resolveAddresses(this->objects);
-}
-
-void Program::expandVariables()
-{
-    for (int i = 0; i < this->commands.size(); i++)
+    vector<RTLNode *> nodes;
+    if (this->command == "GET")
     {
-        vector<RTLNode *>::iterator node = this->commands.begin() + i;
-        vector<RTLNode *> expanded;
-
-        if (Operation *operation = dynamic_cast<Operation *>(*node))
+        if (!(dynamic_cast<VReg *>(this->operand) || dynamic_cast<Reg *>(this->operand)))
         {
-            operation->operand_a = RTLObject::expand(operation->operand_a, expanded);
-            operation->operand_b = RTLObject::expand(operation->operand_b, expanded);
+            VReg *vreg = new VReg(VReg::getNewName());
+            vreg->adr = RTLObject::allocateVariable();
+
+            Assignment *assignment = new Assignment(vreg, this->operand);
+            vector<RTLNode *> to_append = assignment->expand(deep);
+
+            this->operand = vreg;
+
+            nodes.push_back(this);
+            nodes.insert(nodes.end(), to_append.begin(), to_append.end());
         }
-        else if (Assignment *assign = dynamic_cast<Assignment *>(*node))
+        else
         {
-            assign->source = RTLObject::expand(assign->source, expanded);
-        }
-        else if (Call *call = dynamic_cast<Call *>(*node))
-        {
-            if (call->command == "PUT")
-            {
-                call->operand = RTLObject::expand(call->operand, expanded);
-            }
-            else if (call->command == "GET")
-            {
-                call->operand = RTLObject::expand(call->operand, expanded);
-                if (expanded.size() > 0)
-                {
-                    if (Array *dest = dynamic_cast<Array *>(expanded[0]))
-                    {
-                        expanded[0] = new Assignment(dest, call->operand);
-                        node++;
-                    }
-                }
-            }
-        }
-
-        i += expanded.size();
-        this->commands.insert(node, expanded.begin(), expanded.end());
-    }
-}
-
-void fill(vector<RTLObject *> &objects, RTLObject *obj)
-{
-    for (auto o : objects)
-        if (o->name == obj->name)
-            return;
-    if (obj->adr != -1)
-    {
-        objects.push_back(obj);
-    }
-}
-
-Reg *allocate(RegisterAllocator &ra, RTLObject *obj, vector<RTLNode *> &expanded, vector<RTLObject *> objects, bool load = true)
-{
-    string tosave = ra.allocate(obj->name);
-    char n = ra.get(obj->name);
-    if (tosave != "")
-    {
-        RTLObject *dropped = nullptr;
-        for (RTLObject *node : objects)
-        {
-            if (node->name == tosave)
-            {
-                dropped = node;
-                break;
-            }
-        }
-
-        if (dropped != nullptr)
-        {
-            if (Array *arr = dynamic_cast<Array *>(dropped))
-            {
-                Constans *adr = new Constans(Constans::getNewName());
-                adr->to = new Reg('h');
-                expanded.push_back(adr);
-
-                // todo
-                expanded.push_back(new MemoryOP("STORE", adr->to, new Reg(n)));
-            }
-            else // if(dynamic_cast<Variable *>(dropped))
-            {
-                Constans *adr = new Constans(Constans::getNewName());
-                adr->to = new Reg('h');
-                adr->value = dropped->adr;
-                expanded.push_back(adr);
-                expanded.push_back(new MemoryOP("STORE", adr->to, new Reg(n)));
-            }
+            nodes.push_back(this);
         }
     }
-    if (load)
+    else
     {
-        if (Array *arr = dynamic_cast<Array *>(obj))
+        if (!(dynamic_cast<VReg *>(this->operand) || dynamic_cast<Reg *>(this->operand)))
         {
-            Constans *adr = new Constans(Constans::getNewName());
-            adr->to = new Reg(n);
-            adr->value = arr->offset;
-        }
-        else if (dynamic_cast<Variable *>(obj))
-        {
-            Constans *adr = new Constans(Constans::getNewName());
-            adr->to = new Reg(n);
-            adr->value = obj->adr;
-            expanded.push_back(adr);
-            expanded.push_back(new MemoryOP("LOAD", adr->to, new Reg(n)));
-        }
-    }
-    if (n == 0)
-    {
-        cerr << "ERROR\n";
-    }
-    return new Reg(n);
-}
+            VReg *vreg = new VReg(VReg::getNewName());
 
-void markUse(RegisterAllocator &ra, vector<RTLNode *>::iterator node, vector<RTLObject *> &objects, int line)
-{
-    if (Operation *operation = dynamic_cast<Operation *>(*node))
-    {
-        ra.markUse(operation->operand_a->name, line);
-        fill(objects, operation->operand_a);
-        ra.markUse(operation->operand_b->name, line);
-        fill(objects, operation->operand_b);
-        ra.markUse(operation->dest->name, line);
-        fill(objects, operation->dest);
-    }
-    else if (Assignment *assign = dynamic_cast<Assignment *>(*node))
-    {
-        ra.markUse(assign->source->name, line);
-        fill(objects, assign->source);
-        ra.markUse(assign->dest->name, line);
-        fill(objects, assign->dest);
-    }
-    else if (Call *call = dynamic_cast<Call *>(*node))
-    {
-        ra.markUse(call->operand->name, line);
-        fill(objects, call->operand);
-    }
-    else if (Array *arr = dynamic_cast<Array *>(*node))
-    {
-        ra.markUse(arr->at->name, line);
-        fill(objects, arr->at);
-        ra.markUse(arr->to->name, line);
-        fill(objects, arr->to);
-    }
-    else if (Constans *con = dynamic_cast<Constans *>(*node))
-    {
-        ra.markUse(con->to->name, line);
-        fill(objects, con->to);
-    }
-}
+            Assignment *assignment = new Assignment(vreg, this->operand);
+            nodes = assignment->expand(deep);
 
-void Program::allocateRegisters()
-{
-    RegisterAllocator ra;
+            this->operand = vreg;
 
-    for (int i = 0; i < this->commands.size(); i++)
-    {
-        vector<RTLNode *>::iterator node = this->commands.begin() + i;
-        (*node)->line = i;
-        markUse(ra, node, this->objects, i);
-    }
-    for (int i = 0; i < this->commands.size(); i++)
-    {
-        vector<RTLNode *>::iterator node = this->commands.begin() + i;
-        if (Jump *jmp = dynamic_cast<Jump *>(*node))
+            nodes.push_back(this);
+        }
+        else
         {
-            if (jmp->destination->line < i)
-            {
-                for (int j = jmp->destination->line; j <= i; j++)
-                {
-                    node = this->commands.begin() + j;
-                    markUse(ra, node, this->objects, i + j);
-                    ;
-                }
-            }
+            nodes.push_back(this);
         }
     }
-
-    ra.prepareUseLists();
-
-    for (int i = 0; i < this->commands.size(); i++)
-    {
-        vector<RTLNode *>::iterator node = this->commands.begin() + i;
-        vector<RTLNode *> expanded;
-        string tosave;
-
-        if (Operation *operation = dynamic_cast<Operation *>(*node))
-        {
-            operation->dest = allocate(ra, operation->dest, expanded, this->objects, false);
-            operation->operand_a = allocate(ra, operation->operand_a, expanded, this->objects);
-            operation->operand_b = allocate(ra, operation->operand_b, expanded, this->objects);
-        }
-        else if (Assignment *assign = dynamic_cast<Assignment *>(*node))
-        {
-            assign->source = allocate(ra, assign->source, expanded, this->objects);
-            assign->dest = allocate(ra, assign->dest, expanded, this->objects, false);
-        }
-        else if (Call *call = dynamic_cast<Call *>(*node))
-        {
-            call->operand = allocate(ra, call->operand, expanded, this->objects, call->command == "PUT");
-        }
-        else if (Array *arr = dynamic_cast<Array *>(*node))
-        {
-            arr->at = allocate(ra, arr->at, expanded, this->objects);
-            arr->to = allocate(ra, arr->to, expanded, this->objects, false);
-        }
-        else if (Constans *con = dynamic_cast<Constans *>(*node))
-        {
-            con->to = allocate(ra, con->to, expanded, this->objects, false);
-        }
-        else if (Jump *jmp = dynamic_cast<Jump *>(*node))
-        {
-            if (jmp->on != nullptr)
-            {
-                jmp->on = allocate(ra, jmp->on, expanded, this->objects);
-            }
-        }
-
-        i += expanded.size();
-        this->commands.insert(node, expanded.begin(), expanded.end());
-        ra.next();
-    }
+    return nodes;
 }

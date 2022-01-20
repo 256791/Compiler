@@ -20,7 +20,7 @@ void Array::printNode()
 
 void Constans::printNode()
 {
-    cout << this->to->name << " <-- " << this->value << endl;
+    cout << this->to->name << " <-- Const(" << (use_inc?"NULL":this->use->name) << ") " << this->value << endl;
 }
 
 void VReg::printNode()
@@ -35,8 +35,14 @@ void Reg::printNode()
 
 void Operation::printNode()
 {
-    cout << this->dest->name << " <-- " << this->operand_a->name << ' '
-         << this->operation << ' ' << this->operand_b->name << endl;
+
+    cout << this->dest->name << " <-- " << this->operand_a->name;
+    if (Array *arr = dynamic_cast<Array *>(this->operand_a))
+        cout << '(' << arr->at->name << ')';
+    cout << ' ' << this->operation << ' ' << this->operand_b->name;
+    if (Array *arr = dynamic_cast<Array *>(this->operand_b))
+        cout << '(' << arr->at->name << ')';
+    cout << endl;
 }
 
 void Call::printNode()
@@ -48,27 +54,30 @@ void Jump::printNode()
 {
     switch (this->type)
     {
-    case 'F':
-        cout << "JUMP 1" << endl;
-        break;
     case 'Z':
-        cout << "JZERO " << this->destination->line << " (" << this->on->name << ')' << endl;
+        cout << "JZERO " << this->destination->name << " (" << this->on->name << ')' << endl;
         break;
     case 'P':
-        cout << "JPOS " << this->destination->line << " (" << this->on->name << ')' << endl;
+        cout << "JPOS " << this->destination->name << " (" << this->on->name << ')' << endl;
         break;
     case 'N':
-        cout << "JNEG " << this->destination->line << " (" << this->on->name << ')' << endl;
+        cout << "JNEG " << this->destination->name << " (" << this->on->name << ')' << endl;
         break;
     case 'J':
-        cout << "JUMP " << this->destination->line << endl;
+        cout << "JUMP " << this->destination->name << endl;
         break;
     }
 }
 
 void Assignment::printNode()
 {
-    cout << this->dest->name << " <-- " << this->source->name << endl;
+    cout << this->dest->name;
+    if (Array *arr = dynamic_cast<Array *>(this->dest))
+        cout << '(' << arr->at->name << ')';
+    cout << " <-- " << this->source->name;
+    if (Array *arr = dynamic_cast<Array *>(this->source))
+        cout << '(' << arr->at->name << ')';
+    cout << endl;
 }
 
 void MemoryOP::printNode()
@@ -86,6 +95,25 @@ void MemoryOP::printNode()
     }
 }
 
-void Flag::printNode(){
-    cout << "FLAG " << this->line << endl;
+void Flag::printNode()
+{
+    cout << "F_" << this->name << endl;
+}
+
+void RTLProgram::printRTL()
+{
+    cout << "RTL OBJECTS" << endl
+         << endl;
+    for (auto node : this->objects)
+    {
+        node->printNode();
+    }
+    cout << endl
+         << endl
+         << "RTL COMMANDS" << endl
+         << endl;
+    for (auto node : this->commands)
+    {
+        node->printNode();
+    }
 }

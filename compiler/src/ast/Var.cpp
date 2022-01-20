@@ -39,7 +39,6 @@ vector<RTLNode*> VarDecl::toRTL()
 {
     vector<RTLNode*> nodes;
     Variable* ptr = new Variable(this->name);
-    ptr->adr = RTLObject::allocateVariable();
     nodes.push_back(ptr);
     return nodes;
 }
@@ -48,8 +47,8 @@ vector<RTLNode*> ArrDecl::toRTL()
 {
     vector<RTLNode*> nodes;
     Array* ptr = new Array(this->name);
-    ptr->adr = RTLObject::allocateArray(this->size);
     ptr->offset = this->from-1;
+    ptr->size = this->size;
     nodes.push_back(ptr);
     return nodes;
 }
