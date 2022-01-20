@@ -12,23 +12,23 @@ extern AST *ast;
 int main()
 {
     yyparse();
-    // ast->printXML(0);
-    // cout << "\n\n";
+    ast->printXML(0);
+    cout << "\n\n";
 
     RTLProgram *program = ast->toRTL();
 
-    // program->printRTL();
-    // cout << "\n\n";
+    program->printRTL();
+    cout << "\n\n";
 
     program->resolveAddresses();
 
-    // program->printRTL();
-    // cout << "\n\n";
+    program->printRTL();
+    cout << "\n\n";
 
     program->expandVariables(false);
 
-    // program->printRTL();
-    // cout << "\n\n";
+    program->printRTL();
+    cout << "\n\n";
 
     program->expandVariables(true);
 

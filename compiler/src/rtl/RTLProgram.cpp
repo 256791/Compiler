@@ -31,80 +31,9 @@ void RTLProgram::expandVariables(bool deep)
     }
 }
 
-void fill(vector<RTLObject *> &objects, RTLObject *obj)
-{
-    for (auto o : objects)
-        if (o->name == obj->name)
-            return;
-    if (obj->adr != -1)
-    {
-        objects.push_back(obj);
-    }
-}
-
-Reg *allocate(RegisterAllocator &ra, RTLObject *obj, vector<RTLNode *> &expanded, vector<RTLObject *> objects, bool load = true)
-{
-    string tosave = ra.allocate(obj->name);
-    char n = ra.get(obj->name);
-    if (tosave != "")
-    {
-        RTLObject *dropped = nullptr;
-        for (RTLObject *node : objects)
-        {
-            if (node->name == tosave)
-            {
-                dropped = node;
-                break;
-            }
-        }
-
-        if (dropped != nullptr)
-        {
-            if (Array *arr = dynamic_cast<Array *>(dropped))
-            {
-                Constans *adr = new Constans(Constans::getNewName());
-                adr->to = new Reg('h');
-                expanded.push_back(adr);
-
-                // todo
-                expanded.push_back(new MemoryOP("STORE", adr->to, new Reg(n)));
-            }
-            else // if(dynamic_cast<Variable *>(dropped))
-            {
-                Constans *adr = new Constans(Constans::getNewName());
-                adr->to = new Reg('h');
-                adr->value = dropped->adr;
-                expanded.push_back(adr);
-                expanded.push_back(new MemoryOP("STORE", adr->to, new Reg(n)));
-            }
-        }
-    }
-    if (load)
-    {
-        if (Array *arr = dynamic_cast<Array *>(obj))
-        {
-            Constans *adr = new Constans(Constans::getNewName());
-            adr->to = new Reg(n);
-            adr->value = arr->offset;
-        }
-        else if (dynamic_cast<Variable *>(obj))
-        {
-            Constans *adr = new Constans(Constans::getNewName());
-            adr->to = new Reg(n);
-            adr->value = obj->adr;
-            expanded.push_back(adr);
-            expanded.push_back(new MemoryOP("LOAD", adr->to, new Reg(n)));
-        }
-    }
-    if (n == 0)
-    {
-        cerr << "ERROR\n";
-    }
-    return new Reg(n);
-}
-
 void RTLProgram::allocateRegisters()
 {
+    int g = 0;
     RegisterAllocator ra;
     for (int i = 0; i < this->commands.size(); i++)
     {
@@ -130,7 +59,6 @@ void RTLProgram::allocateRegisters()
     {
         ra.clearUse();
         int end = 0;
-
         for (int j = i; j < this->commands.size(); j++)
         {
             RTLNode *node = this->commands[j];
@@ -150,15 +78,11 @@ void RTLProgram::allocateRegisters()
             }
         }
 
-        int offset = 0;
-
         for (int j = i; j <= end; j++)
         {
             vector<RTLNode *> expanded;
-            this->commands[j]->printNode();
             for (RTLObject *use : this->commands[j]->getUseVector())
             {
-                
                 string name = ra.allocate(use->name);
                 char reg = ra.get(use->name);
                 RTLObject *tosave = nullptr;
@@ -170,18 +94,14 @@ void RTLProgram::allocateRegisters()
                         break;
                     }
                 }
-                
-                if (tosave != nullptr)
-                {
-                    expanded.push_back(new Assignment(tosave, new Reg(reg)));
-                }
 
-                if(this->commands[j]->isRHS(use->name)){
+                if (tosave != nullptr)
+                    expanded.push_back(new Assignment(tosave, new Reg(reg)));
+
+                if (this->commands[j]->isRHS(use->name))
                     expanded.push_back(new Assignment(new Reg(reg), use));
-                }
 
                 this->commands[j]->assignReg(use->name, new Reg(reg));
-                
             }
 
             this->commands.insert(this->commands.begin() + j, expanded.begin(), expanded.end());
@@ -190,5 +110,22 @@ void RTLProgram::allocateRegisters()
             ra.next();
         }
         i = end;
+        if (end == 0)
+            break;
+    }
+}
+
+void RTLProgram::allignRegisters()
+{
+}
+
+vector<Command> RTLProgram::toAll()
+{
+    vector<Command> program;
+    char reg[8] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+
+    for(RTLNode* node: this->commands){
+
+        vector<Command> block = node->toAll();
     }
 }

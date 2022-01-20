@@ -54,3 +54,6 @@ class JnegCom : Command
 class HaltCom : Command
 {
 };
+class FlagCom : Command
+{
+};
