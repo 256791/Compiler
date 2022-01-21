@@ -58,6 +58,7 @@ void RTLProgram::allocateRegisters()
     for (int i = 0; i < this->commands.size(); i++)
     {
         ra.clearUse();
+        ra.clearContext();
         int end = 0;
         for (int j = i; j < this->commands.size(); j++)
         {
@@ -68,15 +69,14 @@ void RTLProgram::allocateRegisters()
                 ra.markUse(use->name, j);
             }
 
-            if (dynamic_cast<Jump *>(node) || dynamic_cast<Flag *>(node))
+            if (dynamic_cast<Flag *>(node))
             {
-                for (int k = j + 1; k < this->commands.size(); k++)
-                    for (auto use : this->commands[k]->getUseVector())
-                        ra.markUse(use->name, j * 2 + k);
                 end = j;
                 break;
             }
         }
+        if (end == 0)
+            end = this->commands.size() - 1;
 
         for (int j = i; j <= end; j++)
         {
@@ -85,21 +85,26 @@ void RTLProgram::allocateRegisters()
             {
                 string name = ra.allocate(use->name);
                 char reg = ra.get(use->name);
-                RTLObject *tosave = nullptr;
-                for (RTLObject *obj : objects)
-                {
-                    if (obj->name == name)
-                    {
-                        tosave = obj;
-                        break;
-                    }
-                }
 
-                if (tosave != nullptr)
-                    expanded.push_back(new Assignment(tosave, new Reg(reg)));
+                // if (name != "")
+                // {
+                //     RTLObject *tosave = nullptr;
+                //     for (RTLObject *obj : objects)
+                //     {
+                //         if (obj->name == name)
+                //         {
+                //             tosave = obj;
+                //             break;
+                //         }
+                //     }
+                //     if (tosave != nullptr)
+                //     {
+                //         expanded.push_back(new Assignment(tosave, new Reg(reg)));
+                //     }
+                // }
 
-                if (this->commands[j]->isRHS(use->name))
-                    expanded.push_back(new Assignment(new Reg(reg), use));
+                // if (this->commands[j]->isRHS(use->name))
+                //     expanded.push_back(new Assignment(new Reg(reg), use));
 
                 this->commands[j]->assignReg(use->name, new Reg(reg));
             }
@@ -110,8 +115,6 @@ void RTLProgram::allocateRegisters()
             ra.next();
         }
         i = end;
-        if (end == 0)
-            break;
     }
 }
 
@@ -119,13 +122,46 @@ void RTLProgram::allignRegisters()
 {
 }
 
-vector<Command> RTLProgram::toAll()
+vector<Command *> RTLProgram::toAll()
 {
-    vector<Command> program;
-    char reg[8] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+    vector<Command *> program;
+    char regs[8] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
-    for(RTLNode* node: this->commands){
-
-        vector<Command> block = node->toAll();
+    for (RTLNode *node : this->commands)
+    {
+        vector<Command *> all = node->toAll(regs);
+        program.insert(program.end(), all.begin(), all.end());
     }
+    program.push_back(new Command("HALT"));
+
+    vector<FlagCommand *> flags;
+    for (int line = 0, i = 0; i < program.size(); i++)
+    {
+        if (FlagCommand *flag = dynamic_cast<FlagCommand *>(program[i]))
+        {
+            flag->line = line;
+            flags.push_back(flag);
+        }
+        else
+        {
+            program[i]->line = line;
+            line++;
+        }
+    }
+    for (int line = 0, i = 0; i < program.size(); i++)
+    {
+        if (JumpCommand *jump = dynamic_cast<JumpCommand *>(program[i]))
+        {
+            for (FlagCommand *f : flags)
+            {
+                if (f->name == jump->flagname)
+                {
+                    jump->offset = f->line - jump->line;
+                    break;
+                }
+            }
+        }
+    }
+
+    return program;
 }

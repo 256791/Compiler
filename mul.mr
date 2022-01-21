@@ -1,0 +1,88 @@
+(wejscie)
+RESET d
+GET
+SWAP c
+GET
+
+
+
+(sprawdzanie czy wynik ma byc ujemny)
+RESET h
+JNEG 8
+(if a>=0 )
+    SWAP c
+    JPOS 21 (stale)
+    (if a<0 )
+        INC h
+        SWAP g
+        RESET a
+        SUB g
+        JUMP 16 (stale)
+(else:)
+    SWAP c
+    JNEG 7 (else)
+    (if a>=0 )
+        INC h
+        SWAP c
+        SWAP g
+        RESET a
+        SUB g
+        JUMP 8 (stale)
+    (else:)
+        SWAP g
+        RESET a
+        SUB g
+        SWAP c
+        SWAP g
+        RESET a
+        SUB g
+
+
+(stale)
+RESET f (stala -1)
+RESET g (stala 1)
+INC f
+DEC g
+
+(zamien aby aktywny czynnik byl mniejszy)
+SWAP b
+RESET a
+ADD b
+SUB c
+JNEG 4
+SWAP b
+SWAP c
+JUMP 2
+SWAP b
+
+(petla mnozenia)
+JZERO 20 (jezeli czynnik 0 do konca)
+SWAP b (odloz czynnik aktywny)
+RESET a
+ADD b (kopiuj czynnik aktywny)
+SHIFT g 
+SHIFT f (dwa shifty zerowanie najmniej zanczacego bitu)
+SWAP e (przeniesienie do e w celu obliczen)
+RESET a
+ADD b (kopiuj czynnik aktywny)
+SUB e (roznica z wyzerowanym 0 bitem czyli jego wyluskanie)
+JZERO 4 (jezeli bit 0 jest zerem nie dodawaj czynnika pasywnego)
+SWAP d (dodawanie czynnika pasywnego do rejestru wynikowego)
+ADD c
+SWAP d
+SWAP c (pomnoz czynnik pasywny *2)
+SHIFT f (podziel czynnik aktywny /2)
+SWAP c (przywroc stan rejestrow z przed petli )
+SWAP b
+SHIFT g
+JPOS -18 (jezeli czynnik aktywny jeszcze nie jest 0 skok do pierwszego kroku petli)
+
+(znak)
+SWAP h
+JZERO 4
+RESET a
+SUB d
+JUMP 2
+SWAP d (wynik)
+PUT
+HALT

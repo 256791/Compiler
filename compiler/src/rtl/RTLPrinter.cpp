@@ -2,25 +2,32 @@
 
 void Variable::printNode()
 {
-    cout << "Variable name: '" << this->name << "' adr: " << this->adr << "'" << endl;
+    if (this->to != nullptr){
+        if(this->store)
+            cout << "Store " << this->name << "(" << this->at->name << ")" << " <-- " << this->to->name << endl;
+        else
+            cout << this->to->name << " <-- Load " << this->name << "(" << this->at->name << ")" << endl;
+    }
+    else
+        cout << "Variable name: '" << this->name << "' adr: " << this->adr << "'" << endl;
 }
 
 void Array::printNode()
 {
-    if (this->at != nullptr)
-    {
-        cout << this->to->name << " <-- " << this->name << "(" << this->at->name << ")" << endl;
+    if (this->to != nullptr){
+        if(this->store)
+            cout << "Store " << this->name << "(" << this->at->name << ")" << " <-- " << this->to->name << endl;
+        else
+            cout << this->to->name << " <-- Load " << this->name << "(" << this->at->name << ")" << endl;
     }
     else
-    {
         cout << "Array name: '" << this->name << "' adr: '" << this->adr
              << "' offset: '" << this->offset << "'" << endl;
-    }
 }
 
 void Constans::printNode()
 {
-    cout << this->to->name << " <-- Const(" << (use_inc?"NULL":this->use->name) << ") " << this->value << endl;
+    cout << this->to->name << " <-- Const(" << (use_inc ? "NULL" : this->use->name) << ") " << this->value << endl;
 }
 
 void VReg::printNode()
@@ -78,21 +85,6 @@ void Assignment::printNode()
     if (Array *arr = dynamic_cast<Array *>(this->source))
         cout << '(' << arr->at->name << ')';
     cout << endl;
-}
-
-void MemoryOP::printNode()
-{
-    if (this->command == "STORE")
-    {
-        cout << "MEM(" << this->adr->name << ")"
-             << " <-- " << this->val->name << endl;
-    }
-    else
-    {
-        cout << this->val->name << " <-- "
-             << "MEM("
-             << this->adr->name << ")" << endl;
-    }
 }
 
 void Flag::printNode()

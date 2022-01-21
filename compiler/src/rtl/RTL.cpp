@@ -37,12 +37,18 @@ Array::Array(string name)
     this->name = name;
     this->adr = -1;
     this->size = -1;
+    this->at = nullptr;
+    this->to = nullptr;
+    this->store = false;
 }
 
 Variable::Variable(string name)
 {
     this->name = name;
     this->adr = -1;
+    this->to = nullptr;
+    this->at = nullptr;
+    this->store = false;
 }
 
 Constans::Constans(string name)
@@ -91,13 +97,6 @@ Jump::Jump(char type, RTLNode *destination, RTLObject *on)
     this->destination = dynamic_cast<Flag *>(destination);
 }
 
-MemoryOP::MemoryOP(string command, RTLObject *adr, RTLObject *val)
-{
-    this->command = command;
-    this->adr = adr;
-    this->val = val;
-}
-
 Call::Call(string command, RTLObject *operand)
 {
     this->command = command;
@@ -124,7 +123,9 @@ void RTLObject::resolveAddresses(vector<RTLObject *> &objects)
     if (dynamic_cast<Variable *>(this))
     {
         this->adr = RTLObject::allocateVariable();
-        objects.push_back(this);
+        Variable* cp = new Variable(this->name);
+        cp->adr = this->adr;
+        objects.push_back(cp);
     }
 }
 
@@ -169,11 +170,6 @@ void Jump::resolveAddresses(vector<RTLObject *> &objects)
     }
 }
 
-void MemoryOP::resolveAddresses(vector<RTLObject *> &objects)
-{
-    // not in use but might be implemented
-}
-
 vector<RTLObject *> RTLNode::getUseVector()
 {
     return vector<RTLObject *>();
@@ -182,16 +178,16 @@ vector<RTLObject *> RTLNode::getUseVector()
 vector<RTLObject *> Variable::getUseVector()
 {
     vector<RTLObject *> objects;
-    // dest and source use
-    objects.push_back(this);
+    objects.push_back(this->at);
+    objects.push_back(this->to);
     return objects;
 };
 
 vector<RTLObject *> Array::getUseVector()
 {
     vector<RTLObject *> objects;
-    // dest and source use
-    objects.push_back(this);
+    objects.push_back(this->at);
+    objects.push_back(this->to);
     return objects;
 };
 
@@ -239,39 +235,40 @@ vector<RTLObject *> Jump::getUseVector()
     return objects;
 };
 
-
-
-bool RTLNode::isRHS(string name){
+bool RTLNode::isRHS(string name)
+{
     return false;
 }
 
-bool Variable::isRHS(string name){
-    //todo?
-    return false;
-}
-
-bool Array::isRHS(string name){
+bool Variable::isRHS(string name)
+{
     return this->at->name == name;
 }
 
-bool Operation::isRHS(string name){
+bool Array::isRHS(string name)
+{
+    return this->at->name == name;
+}
+
+bool Operation::isRHS(string name)
+{
     return this->operand_a->name == name || this->operand_b->name == name;
 }
 
-bool Assignment::isRHS(string name){
+bool Assignment::isRHS(string name)
+{
     return this->source->name == name;
 }
 
-bool Call::isRHS(string name){
+bool Call::isRHS(string name)
+{
     return this->command == "PUT";
 }
 
-bool Jump::isRHS(string name){
+bool Jump::isRHS(string name)
+{
     return true;
 }
-
-
-
 
 void RTLNode::assignReg(string name, Reg *reg)
 {
@@ -279,12 +276,20 @@ void RTLNode::assignReg(string name, Reg *reg)
     throw this;
 };
 
-void Variable::assignReg(string name, Reg *reg){
-    // todo
+void Variable::assignReg(string name, Reg *reg)
+{
+    if (this->to->name == name)
+        this->to = reg;
+    else if (this->at->name == name)
+        this->at = reg;
 };
 
-void Array::assignReg(string name, Reg *reg){
-    // todo
+void Array::assignReg(string name, Reg *reg)
+{
+    if (this->to->name == name)
+        this->to = reg;
+    else if (this->at->name == name)
+        this->at = reg;
 };
 
 void Constans::assignReg(string name, Reg *reg)
@@ -314,6 +319,7 @@ void Operation::assignReg(string name, Reg *reg)
         this->operand_b = reg;
     }
 };
+
 void Assignment::assignReg(string name, Reg *reg)
 {
     if (this->dest->name == name)
@@ -360,10 +366,11 @@ vector<RTLNode *> Constans::expandVariable(VReg *to)
 {
     vector<RTLNode *> nodes;
     this->to = to;
-    if (this->value > 65536 && to->adr == -1)
-        this->to->adr = allocateVariable();
+    // if (this->value > 65536 && to->adr == -1)
+    //     this->to->adr = allocateVariable();
 
     // this->use = new VReg(VReg::getNewName());
+    this->use_inc = true;
     this->use = new Reg('h');
 
     nodes.push_back(this);
@@ -374,6 +381,14 @@ vector<RTLNode *> Constans::expandVariable(VReg *to)
 vector<RTLNode *> Variable::expandVariable(VReg *to)
 {
     vector<RTLNode *> nodes;
+    this->to = to;
+    VReg *reg = new VReg(VReg::getNewName());
+    this->at = reg;
+
+    Constans *con = new Constans(Constans::getNewName());
+    con->value = this->adr;
+    nodes = con->expandVariable(reg);
+
     nodes.push_back(this);
     return nodes;
 }
@@ -381,26 +396,56 @@ vector<RTLNode *> Variable::expandVariable(VReg *to)
 vector<RTLNode *> Array::expandVariable(VReg *to)
 {
     vector<RTLNode *> nodes;
-    this->to = to;
-    nodes.push_back(this);
+
+    if (Constans *con = dynamic_cast<Constans *>(this->at))
+    {
+        int adr = this->adr - this->offset + con->value;
+        Variable *var = new Variable(this->name + "_C");
+        var->adr = adr;
+        nodes = var->expandVariable(to);
+    }
+
+    else if (Variable *var = dynamic_cast<Variable *>(this->at))
+    {
+        this->to = to;
+        int adr = this->adr - this->offset;
+
+        VReg *atvreg = new VReg(VReg::getNewName());
+        nodes = var->expandVariable(atvreg);
+
+        VReg *adrvreg = new VReg(VReg::getNewName());
+        Constans *con = new Constans(Constans::getNewName());
+        con->value = adr;
+        vector<RTLNode *> to_append = con->expandVariable(adrvreg);
+        nodes.insert(nodes.end(), to_append.begin(), to_append.end());
+
+        Operation* op = new Operation(adrvreg, adrvreg, '+', atvreg);
+        nodes.push_back(op);
+
+        this->at = adrvreg;
+
+        nodes.push_back(this);
+    }
+
+    else if (VReg *vreg = dynamic_cast<VReg *>(this->at))
+    {
+        this->to = to;
+        int adr = this->adr + this->offset;
+
+        VReg *adrvreg = new VReg(VReg::getNewName());
+        Constans *con = new Constans(Constans::getNewName());
+        con->value = adr;
+        nodes = con->expandVariable(adrvreg);
+
+        Operation* op = new Operation(adrvreg, adrvreg, '+', vreg);
+        nodes.push_back(op);
+
+        this->at = adrvreg;
+
+        nodes.push_back(this);
+    }
+
     return nodes;
-
-    // if(Variable* var = dynamic_cast<Variable *>(this->at)){
-
-    // }else if(Constans* con = dynamic_cast<Constans *>(this->at)){
-    //     int adr = this->adr + this->offset + con->value;
-
-    //     this->at;
-    // }else if(VReg* vreg = dynamic_cast<VReg *>(this->at)){
-
-    // }
-
-    // Constans *con = new Constans(Constans::getNewName());
-    // con->value = this->adr + this->offset;
-    // vector<RTLNode *> nodes = con->expand(deep);
-    // Assignment *assignment = new Assignment(new VReg(VReg::getNewName()), con);
-    // nodes.push_back(assignment);
-    // return nodes;
 }
 
 vector<RTLNode *> Assignment::expand(bool deep)
@@ -425,18 +470,17 @@ vector<RTLNode *> Assignment::expand(bool deep)
     {
         if (!(dynamic_cast<VReg *>(this->source) || dynamic_cast<Reg *>(this->source)))
         {
-            // should extend?
-            // todo remove constans only
-            if (dynamic_cast<Constans *>(this->source))
-            {
-                nodes = this->source->expandVariable(dynamic_cast<VReg *>(this->dest));
-                return nodes;
-            }
+            nodes = this->source->expandVariable(dynamic_cast<VReg *>(this->dest));
+            return nodes;
         }
-        if (!(dynamic_cast<VReg *>(this->dest) || dynamic_cast<Reg *>(this->dest)))
+        if (dynamic_cast<Array *>(this->dest) || dynamic_cast<Variable *>(this->dest))
         {
-            // should extnd?
-            // todo create var store
+            nodes = this->dest->expandVariable(dynamic_cast<VReg *>(this->source));
+            if(Array* arr = dynamic_cast<Array *>(this->dest))
+                arr->store = true;
+            if(Variable* var = dynamic_cast<Variable *>(this->dest))
+                var->store = true;
+            return nodes;
         }
     }
 
@@ -499,7 +543,7 @@ vector<RTLNode *> Call::expand(bool deep)
             VReg *vreg = new VReg(VReg::getNewName());
             vreg->adr = RTLObject::allocateVariable();
 
-            Assignment *assignment = new Assignment(vreg, this->operand);
+            Assignment *assignment = new Assignment(this->operand, vreg);
             vector<RTLNode *> to_append = assignment->expand(deep);
 
             this->operand = vreg;

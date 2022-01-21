@@ -1,0 +1,8 @@
+#include "all/ALL.h"
+#include "RTL.h"
+
+vector<Command *> multiply(char a, char b, char result);
+
+vector<Command *> divide(char a, char b, char result);
+
+vector<Command *> modulo(char a, char b, char result);

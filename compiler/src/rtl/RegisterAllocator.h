@@ -27,6 +27,8 @@ public:
 
     void markUse(string name, int line);
     void clearUse();
+    void clearContext();
+    string *getContext();
     void prepareUseLists();
     void next();
     string allocate(string name);

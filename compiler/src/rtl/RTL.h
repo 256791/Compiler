@@ -21,7 +21,7 @@ public:
     virtual bool isRHS(string name);
     virtual vector<RTLNode* > expand(bool deep);
     virtual void resolveAddresses(vector<RTLObject *> &objects);
-    virtual vector<Command> toAll() = 0;
+    virtual vector<Command*> toAll(char* regs) = 0;
     virtual void printNode() = 0;
 };
 
@@ -35,7 +35,7 @@ public:
     Flag();
 
     string name;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -55,7 +55,7 @@ public:
 
     virtual vector<RTLNode* > expandVariable(VReg* to);
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    virtual vector<Command> toAll() = 0;
+    virtual vector<Command*> toAll(char* regs) = 0;
     virtual void printNode() = 0;
 };
 
@@ -69,7 +69,7 @@ public:
 
     VReg(string name);
 
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -83,7 +83,7 @@ public:
 
     Reg(char name);
 
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -91,12 +91,15 @@ class Variable : public RTLObject
 {
 public:
     Variable(string name);
+    RTLObject *at;
+    RTLObject *to;
+    bool store;
 
     void assignReg(string name, Reg* reg) override;
     bool isRHS(string name) override;
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expandVariable(VReg* to) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -109,13 +112,14 @@ public:
     int size;
     RTLObject *at;
     RTLObject *to;
+    bool store;
 
     void assignReg(string name, Reg* reg) override;
     bool isRHS(string name) override;
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expandVariable(VReg* to) override;
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -136,7 +140,7 @@ public:
     void assignReg(string name, Reg* reg) override;
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expandVariable(VReg* to) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -155,7 +159,7 @@ public:
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expand(bool deep) override;
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -172,7 +176,7 @@ public:
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expand(bool deep) override;
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -189,21 +193,7 @@ public:
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expand(bool deep) override;
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
-    void printNode() override;
-};
-
-class MemoryOP : public RTLNode
-{
-public:
-    MemoryOP(string command, RTLObject *adr, RTLObject *val);
-
-    string command;
-    RTLObject *adr;
-    RTLObject *val;
-
-    void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -224,7 +214,7 @@ public:
     vector<RTLObject* > getUseVector() override;
     vector<RTLNode* > expand(bool deep) override;
     void resolveAddresses(vector<RTLObject *> &objects) override;
-    vector<Command> toAll() override;
+    vector<Command*> toAll(char* regs) override;
     void printNode() override;
 };
 
@@ -241,7 +231,7 @@ public:
     void expandVariables(bool deep);
     void allocateRegisters();
     void allignRegisters();
-    vector<Command> toAll();
+    vector<Command*> toAll();
 };
 
 #endif

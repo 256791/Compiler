@@ -1,59 +1,53 @@
+#ifndef ALL_H
+#define ALL_H
 #include <string>
+#include <fstream>
+
 using namespace std;
 
 class Command
 {
-    virtual void toASM(FILE out);
+public:
+    Command(string n) : name(n), line(0) {};
+    string name;
+    int line;
+
+    virtual void toASM(ostream &out)
+    {
+        out << name << endl;
+    };
 };
 
-class GetCom : Command
+class RegCommand : public Command
 {
+public:
+    RegCommand(string n, char r) : Command(n), reg(r){};
+    char reg;
+    void toASM(ostream &out) override
+    {
+        out << name << ' ' << reg << endl;
+    };
 };
-class PutCom : Command
+
+class JumpCommand : public Command
 {
+public:
+    JumpCommand(string n, string f) : Command(n), flagname(f), offset(0){};
+    string flagname;
+    int offset;
+    void toASM(ostream &out) override
+    {
+        out << name << ' ' << offset << endl;
+    };
 };
-class LoadCom : Command
+
+class FlagCommand : public Command
 {
+public:
+    FlagCommand(string f) : Command(f){};
+    void toASM(ostream &out) override
+    {
+        out << "(FLAG: " << name << ")\n";
+    }
 };
-class StoreCom : Command
-{
-};
-class AddCom : Command
-{
-};
-class SubCom : Command
-{
-};
-class ShiftCom : Command
-{
-};
-class SwapCom : Command
-{
-};
-class ResetCom : Command
-{
-};
-class IncCom : Command
-{
-};
-class DecCom : Command
-{
-};
-class JumpCom : Command
-{
-};
-class JposCom : Command
-{
-};
-class JzeroCom : Command
-{
-};
-class JnegCom : Command
-{
-};
-class HaltCom : Command
-{
-};
-class FlagCom : Command
-{
-};
+#endif

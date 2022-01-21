@@ -1,0 +1,129 @@
+GET
+SWAP b
+GET
+SWAP c
+
+
+(check if any zero then zero result and jump to end)
+RESET a
+SWAP b
+JZERO 96(end code)
+SWAP b
+SWAP c
+JZERO 2
+JUMP 3
+SWAP b
+JUMP 90(end code)
+SWAP c
+
+
+(fix sign mark h)
+RESET h
+SWAP c
+JNEG 2
+JUMP 5
+SWAP c
+RESET a
+SUB c
+INC h
+SWAP c
+SWAP b
+JNEG 2
+JUMP 6
+SWAP b
+RESET a
+SUB b
+INC h
+INC h
+SWAP b
+
+
+RESET d (shifted)
+RESET e (shifted 1)
+RESET g (shift count)
+RESET f (1)
+INC f
+INC e (from 1 or 0?)
+SWAP d
+ADD c
+SWAP d
+
+(beg_pre)
+RESET a
+ADD b
+SUB d
+JNEG 9 (end_pre)
+SWAP e
+SHIFT f
+SWAP e
+SWAP d
+SHIFT f
+SWAP d
+INC g
+JUMP -11 (beg_pre)
+
+
+(end_pre)
+DEC f
+DEC f (-1)
+DEC g
+SWAP e
+SHIFT f
+SWAP e
+SWAP d
+RESET a
+ADD c
+SHIFT g
+SWAP d
+RESET g
+
+SWAP e
+
+(beg_div)
+JZERO 16(end_div)
+SWAP e
+RESET a
+ADD b
+SUB d
+JNEG 5(skip)
+SWAP b
+SWAP g
+ADD e
+SWAP g
+(skip)
+SWAP d
+SHIFT f
+SWAP d
+SWAP e
+SHIFT f
+JUMP -15(beg_div)
+(end_div)
+
+SWAP h
+JZERO 19(end fix)
+DEC a
+JZERO 11(case 1)
+DEC a
+JZERO 5(case 2)
+(case 3)
+RESET a
+SUB b
+SWAP b
+JUMP 11(end fix)
+(case 2)
+SWAP c
+SUB b
+SWAP b
+JUMP 7(end fix)
+(case 1)
+SWAP c
+SUB b
+SWAP b
+RESET a
+SUB b
+SWAP b
+(end fix)
+
+SWAP b (mod)
+PUT
+HALT

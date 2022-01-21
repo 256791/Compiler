@@ -83,7 +83,7 @@ vector<RTLNode*> WhileStmnt::toRTL()
     vector<RTLNode*> body = this->stmnts->toRTL();
     
     vector<RTLNode*> nodes;
-    body.push_back(jumpPtrLoop);
+    nodes.push_back(jumpPtrLoop);
     nodes.insert(nodes.end(), cond.begin(), cond.end());
     nodes.insert(nodes.end(), body.begin(), body.end());
     nodes.push_back(new Jump(jumpPtrLoop));

@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include "ast/AST.h"
 #include "rtl/RTL.h"
+#include "rtl/all/ALL.h"
 #include "parser.tab.h"
 
 extern FILE *yyin;
@@ -12,29 +13,43 @@ extern AST *ast;
 int main()
 {
     yyparse();
-    ast->printXML(0);
+    // ast->printXML(0);
+    // cout << "\n\n";
+
+    RTLProgram *rtl = ast->toRTL();
+
+    rtl->printRTL();
     cout << "\n\n";
 
-    RTLProgram *program = ast->toRTL();
+    rtl->resolveAddresses();
 
-    program->printRTL();
+    // rtl->printRTL();
+    // cout << "\n\n";
+
+    rtl->expandVariables(false);
+
+    rtl->printRTL();
     cout << "\n\n";
 
-    program->resolveAddresses();
+    rtl->expandVariables(true);
 
-    program->printRTL();
+    rtl->printRTL();
     cout << "\n\n";
 
-    program->expandVariables(false);
+    rtl->allocateRegisters();
 
-    program->printRTL();
+    rtl->printRTL();
     cout << "\n\n";
 
-    program->expandVariables(true);
+    ofstream file;
+    file.open("prog.imp");
+    for (auto n : rtl->toAll())
+    {
+        // n->toASM(cout);
+        n->toASM(file);
+    }
+    file << "HALT\n";
+    file.close();
 
-    program->printRTL();
-    cout << "\n\n";
-
-    program->allocateRegisters();
-    program->printRTL();
+    return 0;
 }

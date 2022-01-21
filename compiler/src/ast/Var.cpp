@@ -47,7 +47,7 @@ vector<RTLNode*> ArrDecl::toRTL()
 {
     vector<RTLNode*> nodes;
     Array* ptr = new Array(this->name);
-    ptr->offset = this->from-1;
+    ptr->offset = this->from;
     ptr->size = this->size;
     nodes.push_back(ptr);
     return nodes;

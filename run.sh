@@ -7,8 +7,10 @@ if test -f "compiler/last_compile.sha"; then
         if [ -z "$1" ]
         then
             ./compiler/compiler < example.imp
+            maszyna_wirtualna/maszyna-wirtualna prog.imp
         else
             ./compiler/compiler < $1
+            maszyna_wirtualna/maszyna-wirtualna prog.imp
         fi
         exit 0
     fi
@@ -25,6 +27,8 @@ echo "$newsha" > "compiler/last_compile.sha"
 if [ -z "$1" ]
 then
     ./compiler/compiler < example.imp
+    maszyna_wirtualna/maszyna-wirtualna prog.imp
 else
     ./compiler/compiler < $1
+    maszyna_wirtualna/maszyna-wirtualna prog.imp
 fi
