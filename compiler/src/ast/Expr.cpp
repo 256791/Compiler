@@ -4,14 +4,16 @@ const string Expr::NAME = "Expression";
 const string Comp::NAME = "Comparison";
 const string BinOpExpr::NAME = "BinaryOperation";
 
-Comp::Comp(string op, Stmnt *a, Stmnt *b)
+Expr::Expr(int l): Stmnt(l){}
+
+Comp::Comp(int l, string op, Stmnt *a, Stmnt *b): Expr(l)
 {
     this->op = op;
     this->a = dynamic_cast<Expr *>(a);
     this->b = dynamic_cast<Expr *>(b);
 }
 
-BinOpExpr::BinOpExpr(char op, Stmnt *a, Stmnt *b)
+BinOpExpr::BinOpExpr(int l, char op, Stmnt *a, Stmnt *b): Expr(l)
 {
     this->op = op;
     this->a = dynamic_cast<Expr *>(a);

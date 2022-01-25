@@ -5,7 +5,7 @@ const string WhileStmnt::NAME = "WhileStatement";
 const string DoStmnt::NAME = "DoStatement";
 const string ForStmnt::NAME = "ForStatement";
 
-IfStmnt::IfStmnt(Stmnt *cond, CompoundStmnt *then)
+IfStmnt::IfStmnt(int l, Stmnt *cond, CompoundStmnt *then): Stmnt(l)
 {
     this->cond = dynamic_cast<Comp *>(cond);
 
@@ -14,7 +14,7 @@ IfStmnt::IfStmnt(Stmnt *cond, CompoundStmnt *then)
     this->els = nullptr;
 };
 
-IfStmnt::IfStmnt(Stmnt *cond, CompoundStmnt *then, CompoundStmnt *els)
+IfStmnt::IfStmnt(int l, Stmnt *cond, CompoundStmnt *then, CompoundStmnt *els): Stmnt(l)
 {
     this->cond = dynamic_cast<Comp *>(cond);
 
@@ -22,32 +22,46 @@ IfStmnt::IfStmnt(Stmnt *cond, CompoundStmnt *then, CompoundStmnt *els)
     this->els = els;
 };
 
-WhileStmnt::WhileStmnt(Stmnt *cond, CompoundStmnt *stmnts)
+WhileStmnt::WhileStmnt(int l, Stmnt *cond, CompoundStmnt *stmnts): Stmnt(l)
 {
     this->cond = dynamic_cast<Comp *>(cond);
     this->stmnts = stmnts;
 }
 
-DoStmnt::DoStmnt(Stmnt *cond, CompoundStmnt *stmnts)
+DoStmnt::DoStmnt(int l, Stmnt *cond, CompoundStmnt *stmnts): Stmnt(l)
 {
     this->cond = dynamic_cast<Comp *>(cond);
     this->stmnts = stmnts;
+    
+    if(this->cond->op == "==")
+        this->cond->op = "!=";
+    else if(this->cond->op == "!=")
+        this->cond->op = "==";
+    else if(this->cond->op == "<")
+        this->cond->op = ">=";
+    else if(this->cond->op == ">")
+        this->cond->op = "<=";
+    else if(this->cond->op == "<=")
+        this->cond->op = ">";
+    else if(this->cond->op == ">=")
+        this->cond->op = "<";
 }
 
-ForStmnt::ForStmnt(string iterator, Stmnt *from, Stmnt *to, char type, CompoundStmnt *stmnts)
+ForStmnt::ForStmnt(int l, string iterator, Stmnt *from, Stmnt *to, char type, CompoundStmnt *stmnts): Stmnt(l)
 {
+    CompoundStmnt* iterator_assignment = new CompoundStmnt(l, new BinOpExpr(l, '=', new VarRef(l, iterator), from));
+    this->init = new CompoundStmnt(l, iterator_assignment, new BinOpExpr(l, '=', new VarRef(l, iterator+"_to"), to));
+    
     if (type == 'D')
     {
-        this->cond = new Comp(">=", new VarRef(iterator), to);
-        this->after = new BinOpExpr('=', new VarRef(iterator), new BinOpExpr('-', new VarRef(iterator), new VarConst(1)));
+        this->cond = new Comp(l, ">=", new VarRef(l, iterator), new VarRef(l, iterator+"_to"));
+        this->after = new BinOpExpr(l, '=', new VarRef(l, iterator), new BinOpExpr(l, '-', new VarRef(l, iterator), new VarConst(l, 1)));
     }
     else
     {
-        this->cond = new Comp("<=", new VarRef(iterator), to);
-        this->after = new BinOpExpr('=', new VarRef(iterator), new BinOpExpr('+', new VarRef(iterator), new VarConst(1)));
+        this->cond = new Comp(l, "<=", new VarRef(l, iterator), new VarRef(l, iterator+"_to"));
+        this->after = new BinOpExpr(l, '=', new VarRef(l, iterator), new BinOpExpr(l, '+', new VarRef(l, iterator), new VarConst(l, 1)));
     }
-
-    this->init = new CompoundStmnt(new BinOpExpr('=', new VarRef(iterator), from));
 
     this->stmnts = stmnts;
 }

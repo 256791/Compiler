@@ -13,6 +13,9 @@ class Stmnt
 public:
     static const string NAME;
 
+    Stmnt(int l);
+    int lineno;
+
     virtual void printXML(int indent) = 0;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -22,8 +25,8 @@ class CompoundStmnt : public Stmnt
 public:
     static const string NAME;
 
-    CompoundStmnt(Stmnt *stmnt);
-    CompoundStmnt(CompoundStmnt *stmnts, Stmnt *stmnt);
+    CompoundStmnt(int l, Stmnt *stmnt);
+    CompoundStmnt(int l, CompoundStmnt *stmnts, Stmnt *stmnt);
     vector<Stmnt *> stmnts;
 
     void printXML(int indent) override;
@@ -35,6 +38,8 @@ class Expr : public Stmnt
 public:
     static const string NAME;
 
+    Expr(int l);
+
     void printXML(int indent) override;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -44,7 +49,7 @@ class Comp : public Expr
 public:
     static const string NAME;
 
-    Comp(string op, Stmnt *a, Stmnt *b);
+    Comp(int l, string op, Stmnt *a, Stmnt *b);
 
     string op;
     Expr *a;
@@ -60,7 +65,7 @@ class BinOpExpr : public Expr
 public:
     static const string NAME;
 
-    BinOpExpr(char op, Stmnt *then, Stmnt *els);
+    BinOpExpr(int l, char op, Stmnt *then, Stmnt *els);
 
     char op;
     Expr *a;
@@ -75,7 +80,7 @@ class VarDecl : public Stmnt
 public:
     static const string NAME;
 
-    VarDecl(string name);
+    VarDecl(int l, string name);
 
     string name;
 
@@ -88,7 +93,7 @@ class ArrDecl : public Stmnt
 public:
     static const string NAME;
 
-    ArrDecl(string name, int from, int to);
+    ArrDecl(int l, string name, int from, int to);
 
     string name;
     int from;
@@ -104,7 +109,7 @@ class Syscall : public Stmnt
 public:
     static const string NAME;
 
-    Syscall(Stmnt *val, char type);
+    Syscall(int l, Stmnt *val, char type);
 
     char type;
     Expr *val;
@@ -118,8 +123,8 @@ class IfStmnt : public Stmnt
 public:
     static const string NAME;
 
-    IfStmnt(Stmnt *cond, CompoundStmnt *then);
-    IfStmnt(Stmnt *cond, CompoundStmnt *then, CompoundStmnt *els);
+    IfStmnt(int l, Stmnt *cond, CompoundStmnt *then);
+    IfStmnt(int l, Stmnt *cond, CompoundStmnt *then, CompoundStmnt *els);
 
     Comp *cond;
     CompoundStmnt *then;
@@ -134,7 +139,7 @@ class WhileStmnt : public Stmnt
 public:
     static const string NAME;
 
-    WhileStmnt(Stmnt *cond, CompoundStmnt *stmnts);
+    WhileStmnt(int l, Stmnt *cond, CompoundStmnt *stmnts);
 
     Comp *cond;
     CompoundStmnt *stmnts;
@@ -148,7 +153,7 @@ class DoStmnt : public Stmnt
 public:
     static const string NAME;
 
-    DoStmnt(Stmnt *cond, CompoundStmnt *stmnts);
+    DoStmnt(int l, Stmnt *cond, CompoundStmnt *stmnts);
 
     Comp *cond;
     CompoundStmnt *stmnts;
@@ -162,7 +167,7 @@ class ForStmnt : public Stmnt
 public:
     static const string NAME;
 
-    ForStmnt(string iterator, Stmnt *from, Stmnt *to, char type, CompoundStmnt *stmnts);
+    ForStmnt(int l, string iterator, Stmnt *from, Stmnt *to, char type, CompoundStmnt *stmnts);
 
     Comp *cond;
     Stmnt *init;
@@ -178,7 +183,7 @@ class VarRef : public Expr
 public:
     static const string NAME;
 
-    VarRef(string name);
+    VarRef(int l, string name);
 
     string name;
 
@@ -191,7 +196,7 @@ class ArrRef : public Expr
 public:
     static const string NAME;
 
-    ArrRef(string name, Stmnt *stmnt);
+    ArrRef(int l, string name, Stmnt *stmnt);
 
     string name;
     Expr *at;
@@ -205,7 +210,7 @@ class VarConst : public Expr
 public:
     static const string NAME;
 
-    VarConst(int value);
+    VarConst(int l, int value);
 
     int value;
 

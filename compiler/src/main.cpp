@@ -12,37 +12,46 @@ extern AST *ast;
 
 int main()
 {
-    yyparse();
-    // ast->printXML(0);
-    // cout << "\n\n";
+    if(yyparse()){
+        cout << "\033[31mCompilation terminated\n";
+        return 0;
+    }
+
+    ast->printXML(0);
+    cout << "\n\n";
 
     RTLProgram *rtl = ast->toRTL();
 
+    cout << "INITIAL\n";
     rtl->printRTL();
     cout << "\n\n";
 
     rtl->resolveAddresses();
 
-    // rtl->printRTL();
-    // cout << "\n\n";
+    cout << "RESOLVE ADR\n";
+    rtl->printRTL();
+    cout << "\n\n";
 
     rtl->expandVariables(false);
 
+    cout << "EXPAND\n";
     rtl->printRTL();
     cout << "\n\n";
 
     rtl->expandVariables(true);
 
+    cout << "EXPAND DEEP\n";
     rtl->printRTL();
     cout << "\n\n";
 
     rtl->allocateRegisters();
 
+    cout << "ALLOCATE\n";
     rtl->printRTL();
     cout << "\n\n";
 
     ofstream file;
-    file.open("prog.imp");
+    file.open("prog.mr");
     for (auto n : rtl->toAll())
     {
         // n->toASM(cout);

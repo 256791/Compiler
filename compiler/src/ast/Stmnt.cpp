@@ -5,19 +5,21 @@ const string Stmnt::NAME = "Statement";
 const string CompoundStmnt::NAME = "CompoundStatement";
 const string Syscall::NAME = "SystemCall";
 
-CompoundStmnt::CompoundStmnt(Stmnt *stmnt)
+Stmnt::Stmnt(int l): lineno(l){}
+
+CompoundStmnt::CompoundStmnt(int l, Stmnt *stmnt): Stmnt(l)
 {
     this->stmnts.push_back(stmnt);
 }
 
-CompoundStmnt::CompoundStmnt(CompoundStmnt *stmnts, Stmnt *stmnt)
+CompoundStmnt::CompoundStmnt(int l, CompoundStmnt *stmnts, Stmnt *stmnt): Stmnt(l)
 {
     this->stmnts.insert(this->stmnts.end(), stmnts->stmnts.begin(), stmnts->stmnts.end());
     this->stmnts.push_back(stmnt);
     delete stmnts;
 }
 
-Syscall::Syscall(Stmnt *val, char type)
+Syscall::Syscall(int l, Stmnt *val, char type): Stmnt(l)
 {
     this->type = type;
     this->val = dynamic_cast<Expr *>(val);

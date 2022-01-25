@@ -4,15 +4,19 @@
 }
 %{
     #include <stdio.h>
+    #include <cstring>
     #include "ast/AST.h"
 
     extern void yyterminate();
+    extern int yylineno;
 
     extern int yylex(void);
     void yyerror(char *s);
 
     AST* ast = nullptr;
 %}
+
+%locations
 
 %union{
     string* name;
@@ -46,54 +50,71 @@ prog:
     | BEG stmnts END          { ast = new AST($2); }
 
 dec:
-    dec',' PIDENTIFIER                      { $$ = new CompoundStmnt($1,  new VarDecl(*$3)); }
-    | dec',' PIDENTIFIER'['NUM':'NUM']'     { $$ = new CompoundStmnt($1, new ArrDecl(*$3, $5, $7)); }
-    | PIDENTIFIER                           { $$ = new CompoundStmnt(new VarDecl(*$1)); }
-    | PIDENTIFIER'['NUM':'NUM']'            { $$ = new CompoundStmnt(new ArrDecl(*$1, $3, $5)); }
+    dec',' PIDENTIFIER                      { $$ = new CompoundStmnt(yylineno, $1,  new VarDecl(yylineno, *$3)); }
+    | dec',' PIDENTIFIER'['NUM':'NUM']'     {
+            if($5>$7){
+                char buffer [50];
+                sprintf(buffer, "wrong array definition %i > %i at line %i", $5, $7, yylineno);
+                yyerror(buffer);
+                YYERROR;
+            }
+            $$ = new CompoundStmnt(yylineno, $1, new ArrDecl(yylineno, *$3, $5, $7));
+        }
+    | PIDENTIFIER                           { $$ = new CompoundStmnt(yylineno, new VarDecl(yylineno, *$1)); }
+    | PIDENTIFIER'['NUM':'NUM']'            { $$ = new CompoundStmnt(yylineno, new ArrDecl(yylineno, *$1, $3, $5)); }
 
 stmnts:
-    stmnts stmnt    { $$ = new CompoundStmnt($1, $2); }
-    | stmnt         { $$ = new CompoundStmnt($1); }
+    stmnts stmnt    { $$ = new CompoundStmnt(yylineno, $1, $2); }
+    | stmnt         { $$ = new CompoundStmnt(yylineno, $1); }
 
 stmnt:
-    identifier ASSIGN expr';'                                   { $$ = new BinOpExpr('=', $1, $3); }
-    | IF cond THEN stmnts ELSE stmnts ENDIF                     { $$ = new IfStmnt($2, $4, $6); }
-    | IF cond THEN stmnts ENDIF                                 { $$ = new IfStmnt($2, $4); }
-    | WHILE cond DO stmnts ENDWHILE                             { $$ = new WhileStmnt($2, $4); }
-    | REPEAT stmnts UNTIL cond';'                               { $$ = new DoStmnt($4, $2); }
-    | FOR PIDENTIFIER FROM value TO value DO stmnts ENDFOR      { $$ = new ForStmnt(*$2, $4, $6, 'U', $8); }
-    | FOR PIDENTIFIER FROM value DOWNTO value DO stmnts ENDFOR  { $$ = new ForStmnt(*$2, $4, $6, 'D', $8); }
-    | READ identifier';'                                        { $$ = new Syscall($2, 'R'); }
-    | WRITE value';'                                            { $$ = new Syscall($2, 'W'); }
+    identifier ASSIGN expr';'                                   { $$ = new BinOpExpr(yylineno, '=', $1, $3); }
+    | IF cond THEN stmnts ELSE stmnts ENDIF                     { $$ = new IfStmnt(yylineno, $2, $4, $6); }
+    | IF cond THEN stmnts ENDIF                                 { $$ = new IfStmnt(yylineno, $2, $4); }
+    | WHILE cond DO stmnts ENDWHILE                             { $$ = new WhileStmnt(yylineno, $2, $4); }
+    | REPEAT stmnts UNTIL cond';'                               { $$ = new DoStmnt(yylineno, $4, $2); }
+    | FOR PIDENTIFIER FROM value TO value DO stmnts ENDFOR      { $$ = new ForStmnt(yylineno, *$2, $4, $6, 'U', $8); }
+    | FOR PIDENTIFIER FROM value DOWNTO value DO stmnts ENDFOR  { $$ = new ForStmnt(yylineno, *$2, $4, $6, 'D', $8); }
+    | READ identifier';'                                        { $$ = new Syscall(yylineno, $2, 'R'); }
+    | WRITE value';'                                            { $$ = new Syscall(yylineno, $2, 'W'); }
 
 expr:
     value                   { $$ = $1; }
-    | value PLUS value      { $$ = new BinOpExpr('+', $1, $3); }
-    | value MINUS value     { $$ = new BinOpExpr('-', $1, $3); }
-    | value TIMES value     { $$ = new BinOpExpr('*', $1, $3); }
-    | value DIV value       { $$ = new BinOpExpr('/', $1, $3); }
-    | value MOD value       { $$ = new BinOpExpr('%', $1, $3); }
+    | value PLUS value      { $$ = new BinOpExpr(yylineno, '+', $1, $3); }
+    | value MINUS value     { $$ = new BinOpExpr(yylineno, '-', $1, $3); }
+    | value TIMES value     { $$ = new BinOpExpr(yylineno, '*', $1, $3); }
+    | value DIV value       { $$ = new BinOpExpr(yylineno, '/', $1, $3); }
+    | value MOD value       { $$ = new BinOpExpr(yylineno, '%', $1, $3); }
 
 cond:
-    value EQ value      { $$ = new Comp("==", $1, $3); }
-    | value NEQ value   { $$ = new Comp("!=", $1, $3); }
-    | value LE value    { $$ = new Comp("<", $1, $3); }  
-    | value GE value    { $$ = new Comp(">", $1, $3); }
-    | value LEQ value   { $$ = new Comp("<=", $1, $3); }
-    | value GEQ value   { $$ = new Comp(">=", $1, $3); }
+    value EQ value      { $$ = new Comp(yylineno, "==", $1, $3); }
+    | value NEQ value   { $$ = new Comp(yylineno, "!=", $1, $3); }
+    | value LE value    { $$ = new Comp(yylineno, "<", $1, $3); }  
+    | value GE value    { $$ = new Comp(yylineno, ">", $1, $3); }
+    | value LEQ value   { $$ = new Comp(yylineno, "<=", $1, $3); }
+    | value GEQ value   { $$ = new Comp(yylineno, ">=", $1, $3); }
 
 value:              
-    NUM             { $$ = new VarConst($1); }
+    NUM             { $$ = new VarConst(yylineno, $1); }
     | identifier    { $$ = $1; }
 
 identifier:
-    PIDENTIFIER                     { $$ = new VarRef(*$1); }
-    | PIDENTIFIER'['PIDENTIFIER']'  { $$ = new ArrRef(*$1, new VarRef(*$3)); }
-    | PIDENTIFIER'['NUM']'          { $$ = new ArrRef(*$1, new VarConst($3)); }
+    PIDENTIFIER                     { $$ = new VarRef(yylineno, *$1); }
+    | PIDENTIFIER'['PIDENTIFIER']'  { $$ = new ArrRef(yylineno, *$1, new VarRef(yylineno, *$3)); }
+    | PIDENTIFIER'['NUM']'          { $$ = new ArrRef(yylineno, *$1, new VarConst(yylineno, $3)); }
 
 %%
 
 void yyerror(char* s)
 {
-    printf("\nError: %s\n",s);
+    if(strcmp("Syntax error", s) == 0){
+        printf("\n\033[31mError\033[0m at line %i %s\n", yylineno, s);
+    }
+    else if(strcmp("Not enough space for parser stacks", s) == 0){
+        printf("\n\033[31mError %s\033[0m\n", s);
+    }else if(strcmp("Parser stack overflow", s) == 0){
+        printf("\n\033[31mError %s\033[0m\n", s);
+    }else{
+        printf("\n\033[31mError\033[0m %s at line %i\n", s, yylineno);
+    }
 }

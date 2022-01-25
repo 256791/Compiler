@@ -6,12 +6,12 @@ const string VarConst::NAME = "VariableConstans";
 const string VarRef::NAME = "VariableReference";
 const string ArrRef::NAME = "ArrayVariableReference";
 
-VarDecl::VarDecl(string name)
+VarDecl::VarDecl(int l, string name): Stmnt(l)
 {
     this->name = name;
 }
 
-ArrDecl::ArrDecl(string name, int from, int to)
+ArrDecl::ArrDecl(int l, string name, int from, int to): Stmnt(l)
 {
     this->name = name;
     this->from = from;
@@ -19,17 +19,17 @@ ArrDecl::ArrDecl(string name, int from, int to)
     this->size = to - from + 1;
 }
 
-VarConst::VarConst(int value)
+VarConst::VarConst(int l, int value): Expr(l)
 {
     this->value = value;
 }
 
-VarRef::VarRef(string name)
+VarRef::VarRef(int l, string name): Expr(l)
 {
     this->name = name;
 }
 
-ArrRef::ArrRef(string name, Stmnt *stmnt)
+ArrRef::ArrRef(int l, string name, Stmnt *stmnt): Expr(l)
 {
     this->name = name;
     this->at = dynamic_cast<Expr *>(stmnt);
