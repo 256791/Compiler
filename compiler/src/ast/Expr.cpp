@@ -111,3 +111,11 @@ vector<RTLNode *> BinOpExpr::toRTL()
 
     return nodes;
 }
+
+bool Comp::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool BinOpExpr::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}

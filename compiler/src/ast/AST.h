@@ -16,6 +16,7 @@ public:
     Stmnt(int l);
     int lineno;
 
+    virtual bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) = 0;
     virtual void printXML(int indent) = 0;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -29,6 +30,7 @@ public:
     CompoundStmnt(int l, CompoundStmnt *stmnts, Stmnt *stmnt);
     vector<Stmnt *> stmnts;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -40,6 +42,7 @@ public:
 
     Expr(int l);
 
+    virtual bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) = 0;
     void printXML(int indent) override;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -55,6 +58,7 @@ public:
     Expr *a;
     Expr *b;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
     vector<RTLNode *> toRTL(RTLNode* then);
@@ -71,6 +75,7 @@ public:
     Expr *a;
     Expr *b;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -84,6 +89,7 @@ public:
 
     string name;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -93,13 +99,14 @@ class ArrDecl : public Stmnt
 public:
     static const string NAME;
 
-    ArrDecl(int l, string name, int from, int to);
+    ArrDecl(int l, string name, long long from, long long to);
 
     string name;
-    int from;
-    int to;
-    int size;
+    long long from;
+    long long to;
+    long long size;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -114,6 +121,7 @@ public:
     char type;
     Expr *val;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -130,6 +138,7 @@ public:
     CompoundStmnt *then;
     CompoundStmnt *els;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -144,6 +153,7 @@ public:
     Comp *cond;
     CompoundStmnt *stmnts;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -158,6 +168,7 @@ public:
     Comp *cond;
     CompoundStmnt *stmnts;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -174,6 +185,7 @@ public:
     Stmnt *after;
     CompoundStmnt *stmnts;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -187,6 +199,7 @@ public:
 
     string name;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -201,6 +214,7 @@ public:
     string name;
     Expr *at;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -210,10 +224,11 @@ class VarConst : public Expr
 public:
     static const string NAME;
 
-    VarConst(int l, int value);
+    VarConst(int l, long long value);
 
-    int value;
+    long long value;
 
+    bool checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -229,6 +244,7 @@ public:
     CompoundStmnt *decls;
     CompoundStmnt *stmnts;
 
+    bool checkVariables();
     void printXML(int indent);
     RTLProgram *toRTL();
 };

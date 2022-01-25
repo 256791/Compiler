@@ -11,7 +11,7 @@ VarDecl::VarDecl(int l, string name): Stmnt(l)
     this->name = name;
 }
 
-ArrDecl::ArrDecl(int l, string name, int from, int to): Stmnt(l)
+ArrDecl::ArrDecl(int l, string name, long long from, long long to): Stmnt(l)
 {
     this->name = name;
     this->from = from;
@@ -19,7 +19,7 @@ ArrDecl::ArrDecl(int l, string name, int from, int to): Stmnt(l)
     this->size = to - from + 1;
 }
 
-VarConst::VarConst(int l, int value): Expr(l)
+VarConst::VarConst(int l, long long value): Expr(l)
 {
     this->value = value;
 }
@@ -76,4 +76,24 @@ vector<RTLNode*> ArrRef::toRTL()
     ptr->at = dynamic_cast<RTLObject* >(this->at->toRTL()[0]);
     nodes.push_back(ptr);
     return nodes;
+}
+
+bool VarDecl::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool VarConst::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool ArrDecl::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool ArrRef::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool VarRef::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
 }

@@ -1,4 +1,5 @@
 %{
+    #include <string>
     #include "ast/AST.h"
     #include "parser.tab.h"
 %}
@@ -12,9 +13,9 @@
 
 [\[\]:;,]    {return(yytext[0]);}
 
--?[0-9]+      {yylval.num = atoi(yytext); return(NUM);}
+-?[0-9]+      {yylval.num = std::stoll(yytext); return(NUM);}
 
-\(.*\)      {}
+\([^\(\)]*\)      {}
 
 [\t\n ]     {}
 

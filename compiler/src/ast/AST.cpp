@@ -35,3 +35,7 @@ RTLProgram *AST::toRTL()
 
     return new RTLProgram(data, commands);
 };
+
+bool AST::checkVariables(){
+
+}

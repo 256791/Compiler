@@ -48,3 +48,11 @@ vector<RTLNode*> Syscall::toRTL()
     nodes.push_back(node);
     return nodes;
 }
+
+bool Syscall::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool CompoundStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}

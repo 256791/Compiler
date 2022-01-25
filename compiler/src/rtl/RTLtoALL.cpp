@@ -39,23 +39,55 @@ vector<Command *> Variable::toAll(char *regs)
 
 vector<Command *> Constans::toAll(char *regs)
 {
+    long long zero = 0;
     vector<Command *> commands;
-    int reg = findReg(regs, this->to->name[0]);
-    commands.push_back(new RegCommand("RESET", reg));
-
     if (this->use_inc)
     {
+        int reg = findReg(regs, this->to->name[0]);
+        commands.push_back(new RegCommand("RESET", reg));
         if (this->value > 0)
-            for (int i = 0; i < this->value; i++)
+            for (long long i = 0; i < this->value; i++)
                 commands.push_back(new RegCommand("INC", reg));
         else
-            for (int i = 0; i > this->value; i--)
+            for (long long i = 0; i > this->value; i--)
                 commands.push_back(new RegCommand("DEC", reg));
     }
     else
     {
-        // if (this->to->name[0] != regs[0])
-        //     commands.push_back(allignReg(regs, this->to->name[0]));
+        commands.push_back(allignReg(regs, this->to->name[0]));
+        commands.push_back(new RegCommand("RESET", 'a'));
+        commands.push_back(new RegCommand("RESET", 'h'));
+        commands.push_back(new RegCommand("INC", 'h'));
+        commands.push_back(new RegCommand("INC", 'h'));
+        commands.push_back(new RegCommand("INC", 'h'));
+        commands.push_back(new RegCommand("INC", 'h'));
+
+        bool pos = (this->value > zero);
+        long long val = this->value;
+        if(val<zero)
+            val = -val;
+        long long s = 15;
+        long long i = 0;
+        //todo fix long long overflow 
+        while((s<<i) < val)
+            i+=4;
+        
+        while( i > 0 )
+        {
+            for (long long j = (val>>i)&s; j > zero; j--)
+                if(pos)
+                    commands.push_back(new RegCommand("INC", 'a'));
+                else
+                    commands.push_back(new RegCommand("DEC", 'a'));
+                    
+            commands.push_back(new RegCommand("SHIFT", 'h'));
+            i-=4;
+        }
+        for (long long j = val & s; j > zero; j--)
+            if(pos)
+                commands.push_back(new RegCommand("INC", 'a'));
+            else
+                commands.push_back(new RegCommand("DEC", 'a'));
     }
     return commands;
 }
@@ -110,13 +142,13 @@ vector<Command *> Operation::toAll(char *regs)
         switch (this->operation)
         {
         case '/':
-            commands = divide(reg_a, reg_b, reg_d);
+            commands = divide(reg_a, reg_b, reg_d, regs);
             break;
         case '*':
-            commands = multiply(reg_a, reg_b, reg_d);
+            commands = multiply(reg_a, reg_b, reg_d, regs);
             break;
         case '%':
-            commands = modulo(reg_a, reg_b, reg_d);
+            commands = modulo(reg_a, reg_b, reg_d, regs);
             break;
         }
     }

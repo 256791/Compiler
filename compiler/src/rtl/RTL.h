@@ -44,14 +44,14 @@ class VReg;
 class RTLObject : public RTLNode
 {
 private:
-    static int ADR;
+    static long long ADR;
 
 public:
-    static int allocateVariable();
-    static int allocateArray(int size);
+    static long long allocateVariable();
+    static long long allocateArray(long long size);
 
     string name;
-    int adr;
+    long long adr;
 
     virtual vector<RTLNode* > expandVariable(VReg* to);
     void resolveAddresses(vector<RTLObject *> &objects) override;
@@ -108,8 +108,8 @@ class Array : public RTLObject
 public:
     Array(string name);
 
-    int offset;
-    int size;
+    long long offset;
+    long long size;
     RTLObject *at;
     RTLObject *to;
     bool store;
@@ -132,7 +132,7 @@ public:
     static string getNewName();
 
     Constans(string name);
-    int value;
+    long long value;
     bool use_inc;
     RTLObject *use;
     RTLObject *to;

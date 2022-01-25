@@ -20,7 +20,7 @@
 
 %union{
     string* name;
-    int num;
+    long long num;
     Stmnt* node;
     CompoundStmnt* nodes;
 }
@@ -53,7 +53,7 @@ dec:
     dec',' PIDENTIFIER                      { $$ = new CompoundStmnt(yylineno, $1,  new VarDecl(yylineno, *$3)); }
     | dec',' PIDENTIFIER'['NUM':'NUM']'     {
             if($5>$7){
-                char buffer [50];
+                char buffer [100];
                 sprintf(buffer, "wrong array definition %i > %i at line %i", $5, $7, yylineno);
                 yyerror(buffer);
                 YYERROR;

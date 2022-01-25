@@ -1,6 +1,6 @@
 .vscode
-.imp
-.mr
+*.imp
+*.mr
 data
 maszyna_wirtualna
 compiler/last_compile.sha

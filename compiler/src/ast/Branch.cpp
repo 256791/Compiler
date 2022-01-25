@@ -142,3 +142,18 @@ vector<RTLNode*> ForStmnt::toRTL()
 
     return nodes;
 }
+
+
+bool ForStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+bool DoStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+bool WhileStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}
+
+bool IfStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
+    
+}

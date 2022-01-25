@@ -1,18 +1,18 @@
 #include "RTL.h"
 
-int RTLObject::ADR = 0;
+long long RTLObject::ADR = 0;
 
 int Constans::ID = 0;
 int VReg::ID = 0;
 int Flag::ID = 0;
 
-int RTLObject::allocateVariable()
+long long RTLObject::allocateVariable()
 {
     return ADR++;
 }
-int RTLObject::allocateArray(int size)
+long long RTLObject::allocateArray(long long size)
 {
-    int a = ADR;
+    long long a = ADR;
     ADR += size;
     return a;
 }
@@ -55,6 +55,7 @@ Constans::Constans(string name)
 {
     this->name = name;
     this->adr = -1;
+    this->use_inc = false;
 }
 
 VReg::VReg(string name)
@@ -370,7 +371,8 @@ vector<RTLNode *> Constans::expandVariable(VReg *to)
     //     this->to->adr = allocateVariable();
 
     // this->use = new VReg(VReg::getNewName());
-    this->use_inc = true;
+    // this->use_inc = true;
+    this->use_inc = false;
     this->use = new Reg('h');
 
     nodes.push_back(this);
@@ -399,16 +401,17 @@ vector<RTLNode *> Array::expandVariable(VReg *to)
 
     if (Constans *con = dynamic_cast<Constans *>(this->at))
     {
-        int adr = this->adr - this->offset + con->value;
+        long long adr = this->adr - this->offset + con->value;
         Variable *var = new Variable(this->name + "_C");
         var->adr = adr;
+        var->store = this->store;
         nodes = var->expandVariable(to);
     }
 
     else if (Variable *var = dynamic_cast<Variable *>(this->at))
     {
         this->to = to;
-        int adr = this->adr - this->offset;
+        long long adr = this->adr - this->offset;
 
         VReg *atvreg = new VReg(VReg::getNewName());
         nodes = var->expandVariable(atvreg);
@@ -430,7 +433,7 @@ vector<RTLNode *> Array::expandVariable(VReg *to)
     else if (VReg *vreg = dynamic_cast<VReg *>(this->at))
     {
         this->to = to;
-        int adr = this->adr + this->offset;
+        long long adr = this->adr - this->offset;
 
         VReg *adrvreg = new VReg(VReg::getNewName());
         Constans *con = new Constans(Constans::getNewName());
@@ -475,11 +478,11 @@ vector<RTLNode *> Assignment::expand(bool deep)
         }
         if (dynamic_cast<Array *>(this->dest) || dynamic_cast<Variable *>(this->dest))
         {
-            nodes = this->dest->expandVariable(dynamic_cast<VReg *>(this->source));
             if(Array* arr = dynamic_cast<Array *>(this->dest))
                 arr->store = true;
             if(Variable* var = dynamic_cast<Variable *>(this->dest))
                 var->store = true;
+            nodes = this->dest->expandVariable(dynamic_cast<VReg *>(this->source));
             return nodes;
         }
     }

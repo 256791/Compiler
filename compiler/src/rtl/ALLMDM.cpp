@@ -1,8 +1,50 @@
 #include "ALLMDM.h"
-
-vector<Command *> multiply(char a, char b, char result)
+void genConst(vector<Command *>* commands, char reg, long long val)
 {
-    int tmp = RTLObject::allocateVariable();
+    long long zero = 0;
+
+    commands->push_back(new RegCommand("SWAP", reg));
+    commands->push_back(new RegCommand("RESET", 'a'));
+    commands->push_back(new RegCommand("RESET", 'h'));
+    commands->push_back(new RegCommand("INC", 'h'));
+    commands->push_back(new RegCommand("INC", 'h'));
+    commands->push_back(new RegCommand("INC", 'h'));
+    commands->push_back(new RegCommand("INC", 'h'));
+
+    bool pos = (val > zero);
+    if (val < zero)
+        val = -val;
+    long long s = 15;
+    long long i = 0;
+    // todo fix long long overflow
+    while ((s << i) < val)
+        i += 4;
+
+    while (i > 0)
+    {
+        for (long long j = (val >> i) & s; j > zero; j--)
+            if (pos)
+                commands->push_back(new RegCommand("INC", 'a'));
+            else
+                commands->push_back(new RegCommand("DEC", 'a'));
+
+        commands->push_back(new RegCommand("SHIFT", 'h'));
+        i -= 4;
+    }
+    for (long long j = val & s; j > zero; j--)
+        if (pos)
+            commands->push_back(new RegCommand("INC", 'a'));
+        else
+            commands->push_back(new RegCommand("DEC", 'a'));
+
+    commands->push_back(new RegCommand("SWAP", 'h'));
+    commands->push_back(new RegCommand("SWAP", reg));
+}
+
+vector<Command *> multiply(char a, char b, char result, char *regs)
+{
+    long long tmp = RTLObject::allocateVariable();
+
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
     string f3 = Flag::getNewName();
@@ -16,8 +58,7 @@ vector<Command *> multiply(char a, char b, char result)
 
     vector<Command *> n;
 
-    for (int i = 0; i < tmp; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+    genConst(&n, result, tmp);
 
     n.push_back(new RegCommand("STORE", 'h'));
     n.push_back(new RegCommand("INC", 'h'));
@@ -136,8 +177,9 @@ vector<Command *> multiply(char a, char b, char result)
     if (result == 'a')
         n.push_back(new RegCommand("SWAP", 'b'));
 
-    for (int i = 0; i < tmp + 6; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+
+    genConst(&n, 'a', tmp+6);
+
 
     if (result != 'g')
     {
@@ -182,9 +224,9 @@ vector<Command *> multiply(char a, char b, char result)
     return n;
 }
 
-vector<Command *> divide(char a, char b, char result)
+vector<Command *> divide(char a, char b, char result, char *regs)
 {
-    int tmp = RTLObject::allocateVariable();
+    long long tmp = RTLObject::allocateVariable();
     vector<Command *> n;
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
@@ -198,8 +240,7 @@ vector<Command *> divide(char a, char b, char result)
     string f10 = Flag::getNewName();
     string f11 = Flag::getNewName();
 
-    for (int i = 0; i < tmp; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+    genConst(&n, result, tmp);
 
     n.push_back(new RegCommand("STORE", 'h'));
     n.push_back(new RegCommand("INC", 'h'));
@@ -341,8 +382,9 @@ vector<Command *> divide(char a, char b, char result)
     if (result == 'a')
         n.push_back(new RegCommand("SWAP", 'b'));
 
-    for (int i = 0; i < tmp + 6; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+
+    genConst(&n, 'a', tmp+6);
+
 
     if (result != 'g')
     {
@@ -387,10 +429,9 @@ vector<Command *> divide(char a, char b, char result)
     return n;
 }
 
-
-vector<Command *> modulo(char a, char b, char result)
+vector<Command *> modulo(char a, char b, char result, char *regs)
 {
-    int tmp = RTLObject::allocateVariable();
+    long long tmp = RTLObject::allocateVariable();
     vector<Command *> n;
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
@@ -409,8 +450,7 @@ vector<Command *> modulo(char a, char b, char result)
     string f15 = Flag::getNewName();
     string f16 = Flag::getNewName();
 
-    for (int i = 0; i < tmp; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+    genConst(&n, result, tmp);
 
     n.push_back(new RegCommand("STORE", 'h'));
     n.push_back(new RegCommand("INC", 'h'));
@@ -460,8 +500,6 @@ vector<Command *> modulo(char a, char b, char result)
     n.push_back(new JumpCommand("JUMP", f1));
     n.push_back(new FlagCommand(f13));
     n.push_back(new RegCommand("SWAP", 'c'));
-    
-
 
     n.push_back(new RegCommand("RESET", 'h'));
     n.push_back(new RegCommand("SWAP", 'c'));
@@ -577,8 +615,9 @@ vector<Command *> modulo(char a, char b, char result)
     if (result == 'a')
         n.push_back(new RegCommand("SWAP", 'b'));
 
-    for (int i = 0; i < tmp + 6; i++)
-        n.push_back(new RegCommand("INC", 'h'));
+
+    genConst(&n, 'a', tmp+6);
+    
 
     if (result != 'g')
     {

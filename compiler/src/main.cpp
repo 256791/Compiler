@@ -10,9 +10,20 @@ extern FILE *yyout;
 extern int yyparse(void);
 extern AST *ast;
 
-int main()
+int main(int argc, char **argv)
 {
-    if(yyparse()){
+    if (argc<2){
+        cout << "\033[31mMissing input file\n";
+        return 0;
+    }
+
+    if(!(yyin = fopen(argv[1], "r"))){
+        cout << "\033[31mCan't open input file\n";
+        return 0;
+    }
+
+    if (yyparse())
+    {
         cout << "\033[31mCompilation terminated\n";
         return 0;
     }
@@ -28,15 +39,15 @@ int main()
 
     rtl->resolveAddresses();
 
-    cout << "RESOLVE ADR\n";
-    rtl->printRTL();
-    cout << "\n\n";
+    // cout << "RESOLVE ADR\n";
+    // rtl->printRTL();
+    // cout << "\n\n";
 
     rtl->expandVariables(false);
 
-    cout << "EXPAND\n";
-    rtl->printRTL();
-    cout << "\n\n";
+    // cout << "EXPAND\n";
+    // rtl->printRTL();
+    // cout << "\n\n";
 
     rtl->expandVariables(true);
 
@@ -46,9 +57,9 @@ int main()
 
     rtl->allocateRegisters();
 
-    cout << "ALLOCATE\n";
-    rtl->printRTL();
-    cout << "\n\n";
+    // cout << "ALLOCATE\n";
+    // rtl->printRTL();
+    // cout << "\n\n";
 
     ofstream file;
     file.open("prog.mr");
