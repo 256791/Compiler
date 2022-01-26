@@ -54,7 +54,7 @@ dec:
     | dec',' PIDENTIFIER'['NUM':'NUM']'     {
             if($5>$7){
                 char buffer [100];
-                sprintf(buffer, "wrong array definition %i > %i at line %i", $5, $7, yylineno);
+                sprintf(buffer, "wrong array definition %i > %i", $5, $7);
                 yyerror(buffer);
                 YYERROR;
             }

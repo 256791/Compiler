@@ -239,6 +239,7 @@ vector<Command *> divide(char a, char b, char result, char *regs)
     string f9 = Flag::getNewName();
     string f10 = Flag::getNewName();
     string f11 = Flag::getNewName();
+    string f12 = Flag::getNewName();
 
     genConst(&n, result, tmp);
 
@@ -369,7 +370,14 @@ vector<Command *> divide(char a, char b, char result, char *regs)
 
     n.push_back(new RegCommand("SWAP", 'h'));
     n.push_back(new JumpCommand("JZERO", f11));
+    //
+    n.push_back(new RegCommand("SWAP", 'b'));
+    n.push_back(new JumpCommand("JZERO", f12));
     n.push_back(new RegCommand("INC", 'g'));
+    n.push_back(new FlagCommand(f12));
+    n.push_back(new RegCommand("SWAP", 'b'));
+    //
+    // n.push_back(new RegCommand("INC", 'g'));
     n.push_back(new RegCommand("RESET", 'a'));
     n.push_back(new RegCommand("SUB", 'g'));
     n.push_back(new RegCommand("SWAP", 'g'));
@@ -449,6 +457,9 @@ vector<Command *> modulo(char a, char b, char result, char *regs)
     string f14 = Flag::getNewName();
     string f15 = Flag::getNewName();
     string f16 = Flag::getNewName();
+    string f17 = Flag::getNewName();
+    string f18 = Flag::getNewName();
+    string f19 = Flag::getNewName();
 
     genConst(&n, result, tmp);
 
@@ -595,14 +606,32 @@ vector<Command *> modulo(char a, char b, char result, char *regs)
     n.push_back(new RegCommand("SWAP", 'b'));
     n.push_back(new JumpCommand("JUMP", f11));
     n.push_back(new FlagCommand(f15));
+    // neg pos
+    //b1
+    n.push_back(new RegCommand("SWAP", 'b'));
+    n.push_back(new JumpCommand("JZERO", f18));
+    n.push_back(new RegCommand("SWAP", 'b'));
+    //e1
     n.push_back(new RegCommand("SWAP", 'c'));
     n.push_back(new RegCommand("SUB", 'b'));
+    //b1
+    n.push_back(new FlagCommand(f18));
+    //e1
     n.push_back(new RegCommand("SWAP", 'b'));
     n.push_back(new JumpCommand("JUMP", f11));
     n.push_back(new FlagCommand(f14));
+    //b2
+    n.push_back(new RegCommand("SWAP", 'b'));
+    n.push_back(new JumpCommand("JZERO", f17));
+    n.push_back(new RegCommand("SWAP", 'b'));
+    //e2
     n.push_back(new RegCommand("SWAP", 'c'));
     n.push_back(new RegCommand("SUB", 'b'));
+    //b2
+    n.push_back(new FlagCommand(f17));
+    //e2
     n.push_back(new RegCommand("SWAP", 'b'));
+
     n.push_back(new RegCommand("RESET", 'a'));
     n.push_back(new RegCommand("SUB", 'b'));
     n.push_back(new RegCommand("SWAP", 'b'));
