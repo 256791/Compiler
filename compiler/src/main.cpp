@@ -16,9 +16,20 @@ int main(int argc, char **argv)
         cout << "\033[31mMissing input file\n";
         return 0;
     }
+    if (argc<3){
+        cout << "\033[31mMissing output file\n";
+        return 0;
+    }
 
     if(!(yyin = fopen(argv[1], "r"))){
         cout << "\033[31mCan't open input file\n";
+        return 0;
+    }
+
+    ofstream file;
+    file.open(argv[2]);
+    if(!file.is_open()){
+        cout << "\033[31mCan't open output file\n";
         return 0;
     }
 
@@ -28,14 +39,21 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    ast->printXML(0);
-    cout << "\n\n";
+    // ast->printXML(0);
+    // cout << "\n\n";
+
+    if (!ast->checkVariables())
+    {
+        cout << "\033[31mCompilation terminated\n";
+        return 0;
+    }
 
     RTLProgram *rtl = ast->toRTL();
 
-    cout << "INITIAL\n";
-    rtl->printRTL();
-    cout << "\n\n";
+    // cout << "INITIAL\n";
+    // rtl->printRTL();
+    // cout << "\n\n";
+
 
     rtl->resolveAddresses();
 
@@ -51,9 +69,9 @@ int main(int argc, char **argv)
 
     rtl->expandVariables(true);
 
-    cout << "EXPAND DEEP\n";
-    rtl->printRTL();
-    cout << "\n\n";
+    // cout << "EXPAND DEEP\n";
+    // rtl->printRTL();
+    // cout << "\n\n";
 
     rtl->allocateRegisters();
 
@@ -61,8 +79,7 @@ int main(int argc, char **argv)
     // rtl->printRTL();
     // cout << "\n\n";
 
-    ofstream file;
-    file.open("prog.mr");
+
     for (auto n : rtl->toAll())
     {
         // n->toASM(cout);

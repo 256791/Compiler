@@ -78,22 +78,53 @@ vector<RTLNode*> ArrRef::toRTL()
     return nodes;
 }
 
-bool VarDecl::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool VarDecl::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    return true;
 }
 
-bool VarConst::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool VarConst::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    return true;
 }
 
-bool ArrDecl::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool ArrDecl::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    return true;
 }
 
-bool ArrRef::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool ArrRef::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    bool flag = true;
+    for(auto v : variables){
+        if(get<0>(v) == this->name){
+            if(get<1>(v)){
+                flag = false;
+                break;
+            }
+            cout << "\n\033[31mError\033[0m Wrong use of variable "
+                << this->name << " at line " << this->lineno << "\n";
+            return false;
+        }
+    }
+
+
+    if(flag){
+        cout << "\n\033[31mError\033[0m Undefinded array variable "
+        << this->name << " at line " << this->lineno << "\n";
+        return false;
+    }
+    return this->at->checkVariables(variables, iterators);
 }
 
-bool VarRef::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool VarRef::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    for(auto v : variables){
+        if(get<0>(v) == this->name){
+            if(!get<1>(v)){
+                return true;
+            }
+            cout << "\n\033[31mError\033[0m Wrong use of array variable "
+                << this->name << " at line " << this->lineno << "\n";
+            return false;
+        }
+    }
+    cout << "\n\033[31mError\033[0m Undefinded variable "
+        << this->name << " at line " << this->lineno << "\n";
+    return false;
 }

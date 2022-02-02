@@ -49,10 +49,36 @@ vector<RTLNode*> Syscall::toRTL()
     return nodes;
 }
 
-bool Syscall::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool Syscall::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    if(this->type == 'R'){
+        for (auto v : iterators)
+        {
+            if (ArrDecl *arr = dynamic_cast<ArrDecl *>(this->val))
+            {
+                if (v == arr->name)
+                {
+                    cout << "\n\033[31mError\033[0m Can't modify iterator "
+                        << arr->name << " at line " << this->lineno << "\n";
+                    return false;
+                }
+            }else if (VarRef *var = dynamic_cast<VarRef *>(this->val))
+            {
+                if (v == var->name)
+                {
+                    cout << "\n\033[31mError\033[0m Can't modify iterator "
+                        << var->name << " at line " << this->lineno << "\n";
+                    return false;
+                }
+            }
+        }
+    }
+    return this->val->checkVariables(variables, iterators);
 }
 
-bool CompoundStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool CompoundStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    for(auto stmnt : this->stmnts){
+        if(!stmnt->checkVariables(variables, iterators))
+            return false;
+    }
+    return true;
 }

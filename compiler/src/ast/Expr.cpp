@@ -4,16 +4,16 @@ const string Expr::NAME = "Expression";
 const string Comp::NAME = "Comparison";
 const string BinOpExpr::NAME = "BinaryOperation";
 
-Expr::Expr(int l): Stmnt(l){}
+Expr::Expr(int l) : Stmnt(l) {}
 
-Comp::Comp(int l, string op, Stmnt *a, Stmnt *b): Expr(l)
+Comp::Comp(int l, string op, Stmnt *a, Stmnt *b) : Expr(l)
 {
     this->op = op;
     this->a = dynamic_cast<Expr *>(a);
     this->b = dynamic_cast<Expr *>(b);
 }
 
-BinOpExpr::BinOpExpr(int l, char op, Stmnt *a, Stmnt *b): Expr(l)
+BinOpExpr::BinOpExpr(int l, char op, Stmnt *a, Stmnt *b) : Expr(l)
 {
     this->op = op;
     this->a = dynamic_cast<Expr *>(a);
@@ -112,10 +112,44 @@ vector<RTLNode *> BinOpExpr::toRTL()
     return nodes;
 }
 
-bool Comp::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool Comp::checkVariables(vector<tuple<string, bool>> &variables, vector<string> iterators)
+{
+    if (!this->a->checkVariables(variables, iterators))
+        return false;
+    if (!this->b->checkVariables(variables, iterators))
+        return false;
+    return true;
 }
 
-bool BinOpExpr::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool BinOpExpr::checkVariables(vector<tuple<string, bool>> &variables, vector<string> iterators)
+{
+    if (!this->a->checkVariables(variables, iterators))
+        return false;
+    if (this->op == '=')
+    {
+        for (auto v : iterators)
+        {
+            if (ArrDecl *arr = dynamic_cast<ArrDecl *>(this->a))
+            {
+                if (v == arr->name)
+                {
+                    cout << "\n\033[31mError\033[0m Can't modify iterator "
+                        << arr->name << " at line " << this->lineno << "\n";
+                    return false;
+                }
+            }else if (VarRef *var = dynamic_cast<VarRef *>(this->a))
+            {
+                if (v == var->name)
+                {
+                    cout << "\n\033[31mError\033[0m Can't modify iterator "
+                        << var->name << " at line " << this->lineno << "\n";
+                    return false;
+                }
+            }
+        }  
+    }
+    if (!this->b->checkVariables(variables, iterators))
+        return false;
+
+    return true;
 }

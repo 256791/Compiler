@@ -1,1 +1,0 @@
-find $1 -type f | while read line ; do sha1sum $line ; done | sort | sha1sum

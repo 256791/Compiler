@@ -49,17 +49,21 @@ DoStmnt::DoStmnt(int l, Stmnt *cond, CompoundStmnt *stmnts): Stmnt(l)
 
 ForStmnt::ForStmnt(int l, string iterator, Stmnt *from, Stmnt *to, char type, CompoundStmnt *stmnts): Stmnt(l)
 {
+    this->iter = new VarRef(l, iterator);
+    this->from = dynamic_cast<Expr*>(from);
+    this->to = dynamic_cast<Expr*>(to);
+
     CompoundStmnt* iterator_assignment = new CompoundStmnt(l, new BinOpExpr(l, '=', new VarRef(l, iterator), from));
-    this->init = new CompoundStmnt(l, iterator_assignment, new BinOpExpr(l, '=', new VarRef(l, iterator+"_to"), to));
+    this->init = new CompoundStmnt(l, iterator_assignment, new BinOpExpr(l, '=', new VarRef(l, iterator+"_to0"), to));
     
     if (type == 'D')
     {
-        this->cond = new Comp(l, ">=", new VarRef(l, iterator), new VarRef(l, iterator+"_to"));
+        this->cond = new Comp(l, ">=", new VarRef(l, iterator), new VarRef(l, iterator+"_to0"));
         this->after = new BinOpExpr(l, '=', new VarRef(l, iterator), new BinOpExpr(l, '-', new VarRef(l, iterator), new VarConst(l, 1)));
     }
     else
     {
-        this->cond = new Comp(l, "<=", new VarRef(l, iterator), new VarRef(l, iterator+"_to"));
+        this->cond = new Comp(l, "<=", new VarRef(l, iterator), new VarRef(l, iterator+"_to0"));
         this->after = new BinOpExpr(l, '=', new VarRef(l, iterator), new BinOpExpr(l, '+', new VarRef(l, iterator), new VarConst(l, 1)));
     }
 
@@ -144,16 +148,39 @@ vector<RTLNode*> ForStmnt::toRTL()
 }
 
 
-bool ForStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool ForStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    if (!this->from->checkVariables(variables, iterators))
+        return false;
+    if (!this->to->checkVariables(variables, iterators))
+        return false;
+    iterators.push_back(this->iter->name);
+    variables.push_back(make_tuple(this->iter->name, false));
+    if (!this->stmnts->checkVariables(variables, iterators))
+        return false;
+    variables.pop_back();
+    return true;
 }
-bool DoStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool DoStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    if (!this->cond->checkVariables(variables, iterators))
+        return false;
+    if (!this->stmnts->checkVariables(variables, iterators))
+        return false;
+    return true;
 }
-bool WhileStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool WhileStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    if (!this->cond->checkVariables(variables, iterators))
+        return false;
+    if (!this->stmnts->checkVariables(variables, iterators))
+        return false;
+    return true;
 }
 
-bool IfStmnt::checkVariables(vector<RTLObject *> *variables, vector<RTLObject *> iterators){
-    
+bool IfStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+    if (!this->cond->checkVariables(variables, iterators))
+        return false;
+    if (!this->then->checkVariables(variables, iterators))
+        return false;
+    if (this->els != nullptr && !this->els->checkVariables(variables, iterators))
+        return false;
+    return true;
 }

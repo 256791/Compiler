@@ -1,10 +1,10 @@
 .vscode
+.old
 *.imp
 *.mr
 data
 maszyna_wirtualna
-compiler/last_compile.sha
-compiler/compiler
+compiler/kompilator
 compiler/src/parser.tab.c
 compiler/src/parser.tab.h
 compiler/src/lexer.yy.c
