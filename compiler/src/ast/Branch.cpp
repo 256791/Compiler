@@ -148,26 +148,26 @@ vector<RTLNode*> ForStmnt::toRTL()
 }
 
 
-bool ForStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool ForStmnt::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     if (!this->from->checkVariables(variables, iterators))
         return false;
     if (!this->to->checkVariables(variables, iterators))
         return false;
     iterators.push_back(this->iter->name);
-    variables.push_back(make_tuple(this->iter->name, false));
+    variables.push_back(make_tuple(this->iter->name, false, true));
     if (!this->stmnts->checkVariables(variables, iterators))
         return false;
     variables.pop_back();
     return true;
 }
-bool DoStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool DoStmnt::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     if (!this->cond->checkVariables(variables, iterators))
         return false;
     if (!this->stmnts->checkVariables(variables, iterators))
         return false;
     return true;
 }
-bool WhileStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool WhileStmnt::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     if (!this->cond->checkVariables(variables, iterators))
         return false;
     if (!this->stmnts->checkVariables(variables, iterators))
@@ -175,7 +175,7 @@ bool WhileStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<st
     return true;
 }
 
-bool IfStmnt::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool IfStmnt::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     if (!this->cond->checkVariables(variables, iterators))
         return false;
     if (!this->then->checkVariables(variables, iterators))

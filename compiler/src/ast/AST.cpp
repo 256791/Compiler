@@ -37,7 +37,7 @@ RTLProgram *AST::toRTL()
 
 bool AST::checkVariables()
 {
-    vector<tuple<string, bool>> variables;
+    vector<tuple<string, bool, bool>> variables;
     vector<string> empty;
     for (Stmnt *obj : this->decls->stmnts)
     {
@@ -52,7 +52,7 @@ bool AST::checkVariables()
                     return false;
                 }
             }
-            variables.push_back(make_tuple(arr->name, true));
+            variables.push_back(make_tuple(arr->name, true, false));
         }
         else if (VarDecl *var = dynamic_cast<VarDecl *>(obj))
         {
@@ -65,7 +65,7 @@ bool AST::checkVariables()
                     return false;
                 }
             }
-            variables.push_back(make_tuple(var->name, false));
+            variables.push_back(make_tuple(var->name, false, false));
         }
     }
     for (Stmnt *stmnt : this->stmnts->stmnts)

@@ -17,7 +17,7 @@ public:
     Stmnt(int l);
     int lineno;
 
-    virtual bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) = 0;
+    virtual bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) = 0;
     virtual void printXML(int indent) = 0;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -31,7 +31,7 @@ public:
     CompoundStmnt(int l, CompoundStmnt *stmnts, Stmnt *stmnt);
     vector<Stmnt *> stmnts;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -43,7 +43,7 @@ public:
 
     Expr(int l);
 
-    virtual bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) = 0;
+    virtual bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) = 0;
     void printXML(int indent) override;
     virtual vector<RTLNode *> toRTL() = 0;
 };
@@ -59,7 +59,7 @@ public:
     Expr *a;
     Expr *b;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
     vector<RTLNode *> toRTL(RTLNode* then);
@@ -76,7 +76,7 @@ public:
     Expr *a;
     Expr *b;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -90,7 +90,7 @@ public:
 
     string name;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -107,7 +107,7 @@ public:
     long long to;
     long long size;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -122,7 +122,7 @@ public:
     char type;
     Expr *val;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -139,7 +139,7 @@ public:
     CompoundStmnt *then;
     CompoundStmnt *els;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -154,7 +154,7 @@ public:
     Comp *cond;
     CompoundStmnt *stmnts;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -169,7 +169,7 @@ public:
     Comp *cond;
     CompoundStmnt *stmnts;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -192,7 +192,7 @@ public:
     Stmnt *after;
     CompoundStmnt *stmnts;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -206,7 +206,7 @@ public:
 
     string name;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -221,7 +221,7 @@ public:
     string name;
     Expr *at;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };
@@ -235,7 +235,7 @@ public:
 
     long long value;
 
-    bool checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators) override;
+    bool checkVariables(vector<tuple<string,bool,bool> > &variables,vector<string> iterators) override;
     void printXML(int indent) override;
     vector<RTLNode *> toRTL() override;
 };

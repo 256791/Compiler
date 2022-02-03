@@ -68,7 +68,6 @@ vector<Command *> Constans::toAll(char *regs)
             val = -val;
         long long s = 15;
         long long i = 0;
-        //todo fix long long overflow 
         while((s<<i) < val)
             i+=4;
         
@@ -226,7 +225,6 @@ vector<Command *> Assignment::toAll(char *regs)
             else if (Variable *arr = dynamic_cast<Variable *>(this->dest))
             {
             }
-            // Costans?
             commands.push_back(new RegCommand("STORE", this->source->name[0]));
         }
     }

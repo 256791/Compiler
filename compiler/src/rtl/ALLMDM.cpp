@@ -1,50 +1,7 @@
 #include "ALLMDM.h"
-void genConst(vector<Command *>* commands, char reg, long long val)
-{
-    long long zero = 0;
-
-    commands->push_back(new RegCommand("SWAP", reg));
-    commands->push_back(new RegCommand("RESET", 'a'));
-    commands->push_back(new RegCommand("RESET", 'h'));
-    commands->push_back(new RegCommand("INC", 'h'));
-    commands->push_back(new RegCommand("INC", 'h'));
-    commands->push_back(new RegCommand("INC", 'h'));
-    commands->push_back(new RegCommand("INC", 'h'));
-
-    bool pos = (val > zero);
-    if (val < zero)
-        val = -val;
-    long long s = 15;
-    long long i = 0;
-    // todo fix long long overflow
-    while ((s << i) < val)
-        i += 4;
-
-    while (i > 0)
-    {
-        for (long long j = (val >> i) & s; j > zero; j--)
-            if (pos)
-                commands->push_back(new RegCommand("INC", 'a'));
-            else
-                commands->push_back(new RegCommand("DEC", 'a'));
-
-        commands->push_back(new RegCommand("SHIFT", 'h'));
-        i -= 4;
-    }
-    for (long long j = val & s; j > zero; j--)
-        if (pos)
-            commands->push_back(new RegCommand("INC", 'a'));
-        else
-            commands->push_back(new RegCommand("DEC", 'a'));
-
-    commands->push_back(new RegCommand("SWAP", 'h'));
-    commands->push_back(new RegCommand("SWAP", reg));
-}
 
 vector<Command *> multiply(char a, char b, char result, char *regs)
 {
-    long long tmp = RTLObject::allocateVariable();
-
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
     string f3 = Flag::getNewName();
@@ -58,41 +15,12 @@ vector<Command *> multiply(char a, char b, char result, char *regs)
 
     vector<Command *> n;
 
-    genConst(&n, result, tmp);
-
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'b'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'c'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'd'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'e'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'f'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'g'));
-    n.push_back(new RegCommand("STORE", 'h'));
-
-    if (a != 'g')
-        a++;
-    else
-        a = 'a';
-
-    if (b != 'g')
-        b++;
-    else
-        b = 'a';
-
     n.push_back(new RegCommand("SWAP", b));
     n.push_back(new RegCommand("SWAP", 'c'));
-    n.push_back(new RegCommand("SWAP", a));
+    if(a == 'a' && b != 'c')
+        n.push_back(new RegCommand("SWAP", b));
+    else if(a != 'c')
+        n.push_back(new RegCommand("SWAP", a));
 
     n.push_back(new RegCommand("RESET", 'd'));
     n.push_back(new RegCommand("RESET", 'h'));
@@ -174,59 +102,12 @@ vector<Command *> multiply(char a, char b, char result, char *regs)
     n.push_back(new FlagCommand(f10));
 
     n.push_back(new RegCommand("SWAP", result));
-    if (result == 'a')
-        n.push_back(new RegCommand("SWAP", 'b'));
 
-
-    genConst(&n, 'a', tmp+6);
-
-
-    if (result != 'g')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'g'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'f')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'f'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'e')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'e'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'd')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'd'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'c')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'c'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'b')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'b'));
-    }
-    if (result != 'a')
-    {
-        n.push_back(new RegCommand("DEC", 'h'));
-        n.push_back(new RegCommand("LOAD", 'h'));
-    }
     return n;
 }
 
 vector<Command *> divide(char a, char b, char result, char *regs)
 {
-    long long tmp = RTLObject::allocateVariable();
     vector<Command *> n;
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
@@ -241,41 +122,12 @@ vector<Command *> divide(char a, char b, char result, char *regs)
     string f11 = Flag::getNewName();
     string f12 = Flag::getNewName();
 
-    genConst(&n, result, tmp);
-
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'b'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'c'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'd'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'e'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'f'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'g'));
-    n.push_back(new RegCommand("STORE", 'h'));
-
-    if (a != 'g')
-        a++;
-    else
-        a = 'a';
-
-    if (b != 'g')
-        b++;
-    else
-        b = 'a';
 
     n.push_back(new RegCommand("SWAP", a));
     n.push_back(new RegCommand("SWAP", 'b'));
-    if (b != 'b')
+    if (b == 'a' && a != 'b')
+        n.push_back(new RegCommand("SWAP", a));
+    else if (b != 'b')
         n.push_back(new RegCommand("SWAP", b));
     n.push_back(new RegCommand("SWAP", 'c'));
 
@@ -386,60 +238,11 @@ vector<Command *> divide(char a, char b, char result, char *regs)
     n.push_back(new FlagCommand(f1));
     n.push_back(new RegCommand("SWAP", 'g'));
     n.push_back(new RegCommand("SWAP", result));
-
-    if (result == 'a')
-        n.push_back(new RegCommand("SWAP", 'b'));
-
-
-    genConst(&n, 'a', tmp+6);
-
-
-    if (result != 'g')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'g'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'f')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'f'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'e')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'e'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'd')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'd'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'c')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'c'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'b')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'b'));
-    }
-    if (result != 'a')
-    {
-        n.push_back(new RegCommand("DEC", 'h'));
-        n.push_back(new RegCommand("LOAD", 'h'));
-    }
     return n;
 }
 
 vector<Command *> modulo(char a, char b, char result, char *regs)
 {
-    long long tmp = RTLObject::allocateVariable();
     vector<Command *> n;
     string f1 = Flag::getNewName();
     string f2 = Flag::getNewName();
@@ -461,41 +264,11 @@ vector<Command *> modulo(char a, char b, char result, char *regs)
     string f18 = Flag::getNewName();
     string f19 = Flag::getNewName();
 
-    genConst(&n, result, tmp);
-
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'b'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'c'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'd'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'e'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'f'));
-    n.push_back(new RegCommand("STORE", 'h'));
-    n.push_back(new RegCommand("INC", 'h'));
-    n.push_back(new RegCommand("SWAP", 'g'));
-    n.push_back(new RegCommand("STORE", 'h'));
-
-    if (a != 'g')
-        a++;
-    else
-        a = 'a';
-
-    if (b != 'g')
-        b++;
-    else
-        b = 'a';
-
     n.push_back(new RegCommand("SWAP", a));
     n.push_back(new RegCommand("SWAP", 'b'));
-    if (b != 'b')
+    if(b == 'a' && a != 'b')
+        n.push_back(new RegCommand("SWAP", a));
+    else if (b != 'b')
         n.push_back(new RegCommand("SWAP", b));
     n.push_back(new RegCommand("SWAP", 'c'));
 
@@ -641,52 +414,5 @@ vector<Command *> modulo(char a, char b, char result, char *regs)
     n.push_back(new RegCommand("SWAP", 'b'));
     n.push_back(new RegCommand("SWAP", result));
 
-    if (result == 'a')
-        n.push_back(new RegCommand("SWAP", 'b'));
-
-
-    genConst(&n, 'a', tmp+6);
-    
-
-    if (result != 'g')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'g'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'f')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'f'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'e')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'e'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'd')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'd'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'c')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'c'));
-    }
-    n.push_back(new RegCommand("DEC", 'h'));
-    if (result != 'b')
-    {
-        n.push_back(new RegCommand("LOAD", 'h'));
-        n.push_back(new RegCommand("SWAP", 'b'));
-    }
-    if (result != 'a')
-    {
-        n.push_back(new RegCommand("DEC", 'h'));
-        n.push_back(new RegCommand("LOAD", 'h'));
-    }
     return n;
 }

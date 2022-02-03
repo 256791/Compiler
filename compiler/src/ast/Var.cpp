@@ -78,28 +78,34 @@ vector<RTLNode*> ArrRef::toRTL()
     return nodes;
 }
 
-bool VarDecl::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool VarDecl::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     return true;
 }
 
-bool VarConst::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool VarConst::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     return true;
 }
 
-bool ArrDecl::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool ArrDecl::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     return true;
 }
 
-bool ArrRef::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool ArrRef::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     bool flag = true;
     for(auto v : variables){
         if(get<0>(v) == this->name){
+            if(!get<2>(v)){
+                cout << "\n\033[31mError\033[0m Use of uninitialized array variable "
+                << this->name << " at line " << this->lineno << "\033[0m\n";
+                return false;
+            }
+
             if(get<1>(v)){
                 flag = false;
                 break;
             }
             cout << "\n\033[31mError\033[0m Wrong use of variable "
-                << this->name << " at line " << this->lineno << "\n";
+                << this->name << " at line " << this->lineno << "\033[0m\n";
             return false;
         }
     }
@@ -107,24 +113,30 @@ bool ArrRef::checkVariables(vector<tuple<string,bool> > &variables,vector<string
 
     if(flag){
         cout << "\n\033[31mError\033[0m Undefinded array variable "
-        << this->name << " at line " << this->lineno << "\n";
+        << this->name << " at line " << this->lineno << "\033[0m\n";
         return false;
     }
     return this->at->checkVariables(variables, iterators);
 }
 
-bool VarRef::checkVariables(vector<tuple<string,bool> > &variables,vector<string> iterators){
+bool VarRef::checkVariables(vector<tuple<string,bool,bool>> &variables,vector<string> iterators){
     for(auto v : variables){
         if(get<0>(v) == this->name){
+            if(!get<2>(v)){
+                cout << "\n\033[31mError\033[0m Use of uninitialized variable "
+                << this->name << " at line " << this->lineno << "\033[0m\n";
+                return false;
+            }
+
             if(!get<1>(v)){
                 return true;
             }
             cout << "\n\033[31mError\033[0m Wrong use of array variable "
-                << this->name << " at line " << this->lineno << "\n";
+                << this->name << " at line " << this->lineno << "\033[0m\n";
             return false;
         }
     }
     cout << "\n\033[31mError\033[0m Undefinded variable "
-        << this->name << " at line " << this->lineno << "\n";
+        << this->name << " at line " << this->lineno << "\033[0m\n";
     return false;
 }

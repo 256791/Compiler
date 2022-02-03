@@ -13,71 +13,57 @@ extern AST *ast;
 int main(int argc, char **argv)
 {
     if (argc<2){
-        cout << "\033[31mMissing input file\n";
+        cout << "\033[31mMissing input file\033[0m\n";
         return 0;
     }
     if (argc<3){
-        cout << "\033[31mMissing output file\n";
+        cout << "\033[31mMissing output file\033[0m\n";
         return 0;
     }
 
     if(!(yyin = fopen(argv[1], "r"))){
-        cout << "\033[31mCan't open input file\n";
+        cout << "\033[31mCan't open input file\033[0m\n";
         return 0;
     }
 
     ofstream file;
     file.open(argv[2]);
     if(!file.is_open()){
-        cout << "\033[31mCan't open output file\n";
+        cout << "\033[31mCan't open output file\033[0m\n";
         return 0;
     }
 
     if (yyparse())
     {
-        cout << "\033[31mCompilation terminated\n";
+        cout << "\033[31mCompilation terminated\033[0m\n";
+        return 0;
+    }
+    // ast->printXML(0);
+
+    if (!ast->checkVariables())
+    {
+        cout << "\033[31mCompilation terminated\033[0m\n";
         return 0;
     }
 
     // ast->printXML(0);
-    // cout << "\n\n";
-
-    if (!ast->checkVariables())
-    {
-        cout << "\033[31mCompilation terminated\n";
-        return 0;
-    }
 
     RTLProgram *rtl = ast->toRTL();
 
-    // cout << "INITIAL\n";
     // rtl->printRTL();
-    // cout << "\n\n";
 
 
     rtl->resolveAddresses();
 
-    // cout << "RESOLVE ADR\n";
     // rtl->printRTL();
-    // cout << "\n\n";
 
     rtl->expandVariables(false);
 
-    // cout << "EXPAND\n";
-    // rtl->printRTL();
-    // cout << "\n\n";
-
     rtl->expandVariables(true);
-
-    // cout << "EXPAND DEEP\n";
-    // rtl->printRTL();
-    // cout << "\n\n";
 
     rtl->allocateRegisters();
 
-    // cout << "ALLOCATE\n";
     // rtl->printRTL();
-    // cout << "\n\n";
 
 
     for (auto n : rtl->toAll())

@@ -8,3 +8,4 @@ compiler/kompilator
 compiler/src/parser.tab.c
 compiler/src/parser.tab.h
 compiler/src/lexer.yy.c
+test

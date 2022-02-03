@@ -112,7 +112,7 @@ vector<RTLNode *> BinOpExpr::toRTL()
     return nodes;
 }
 
-bool Comp::checkVariables(vector<tuple<string, bool>> &variables, vector<string> iterators)
+bool Comp::checkVariables(vector<tuple<string, bool, bool>> &variables, vector<string> iterators)
 {
     if (!this->a->checkVariables(variables, iterators))
         return false;
@@ -121,8 +121,28 @@ bool Comp::checkVariables(vector<tuple<string, bool>> &variables, vector<string>
     return true;
 }
 
-bool BinOpExpr::checkVariables(vector<tuple<string, bool>> &variables, vector<string> iterators)
+bool BinOpExpr::checkVariables(vector<tuple<string, bool, bool>> &variables, vector<string> iterators)
 {
+    if (this->op == '=')
+    {
+        if (ArrRef *arr = dynamic_cast<ArrRef *>(this->a))
+        {
+            for (int i = 0; i < variables.size(); i++)
+                if (get<0>(variables[i]) == arr->name)
+                {
+                    get<2>(variables[i]) = true;
+                    break;
+                }
+        }
+        else if (VarRef *var = dynamic_cast<VarRef *>(this->a))
+            for (int i = 0; i < variables.size(); i++)
+                if (get<0>(variables[i]) == var->name)
+                {
+                    get<2>(variables[i]) = true;
+                    break;
+                }
+    }
+
     if (!this->a->checkVariables(variables, iterators))
         return false;
     if (this->op == '=')
@@ -134,19 +154,20 @@ bool BinOpExpr::checkVariables(vector<tuple<string, bool>> &variables, vector<st
                 if (v == arr->name)
                 {
                     cout << "\n\033[31mError\033[0m Can't modify iterator "
-                        << arr->name << " at line " << this->lineno << "\n";
+                         << arr->name << " at line " << this->lineno << "\033[0m\n";
                     return false;
                 }
-            }else if (VarRef *var = dynamic_cast<VarRef *>(this->a))
+            }
+            else if (VarRef *var = dynamic_cast<VarRef *>(this->a))
             {
                 if (v == var->name)
                 {
                     cout << "\n\033[31mError\033[0m Can't modify iterator "
-                        << var->name << " at line " << this->lineno << "\n";
+                         << var->name << " at line " << this->lineno << "\033[0m\n";
                     return false;
                 }
             }
-        }  
+        }
     }
     if (!this->b->checkVariables(variables, iterators))
         return false;
